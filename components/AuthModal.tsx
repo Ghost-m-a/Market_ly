@@ -1,5 +1,5 @@
 "use client";
-import { signIn } from "next-auth/react";
+
 import {
    useEffect,
    useId,
@@ -9,7 +9,6 @@ import {
    type FormEvent,
 } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-// @ts-expect-error CSS side-effect import is handled by the bundler.
 import "./styles/AuthFlipCard.css";
 
 type Side = "login" | "signup";
@@ -231,20 +230,6 @@ function EyeButton({
 }
 
 function OAuthRow({ mode }: { mode: "login" | "signup" }) {
-   const [loading, setLoading] = useState<"google" | "facebook" | null>(null);
-   const [error, setError] = useState("");
-
-   const handleOAuth = async (provider: "google" | "facebook") => {
-      setError("");
-      setLoading(provider);
-      try {
-         await signIn(provider, { callbackUrl: "/dashboard" });
-      } catch (err) {
-         setError(err instanceof Error ? err.message : "OAuth sign-in failed.");
-         setLoading(null);
-      }
-   };
-
    return (
       <div className="oauth-block">
          <div className="oauth-divider">
@@ -256,29 +241,20 @@ function OAuthRow({ mode }: { mode: "login" | "signup" }) {
             <button
                type="button"
                className="oauth-btn"
-               onClick={() => handleOAuth("google")}
-               disabled={loading !== null}
+               aria-label="Continue with Google"
             >
                <GoogleIcon />
-               <span>{loading === "google" ? "Connecting…" : "Google"}</span>
+               <span>Google</span>
             </button>
             <button
                type="button"
                className="oauth-btn"
-               onClick={() => handleOAuth("facebook")}
-               disabled={loading !== null}
+               aria-label="Continue with Facebook"
             >
                <FacebookIcon />
-               <span>
-                  {loading === "facebook" ? "Connecting…" : "Facebook"}
-               </span>
+               <span>Facebook</span>
             </button>
          </div>
-         {error && (
-            <p className="field__error" style={{ marginTop: 8 }}>
-               {error}
-            </p>
-         )}
       </div>
    );
 }
@@ -323,7 +299,6 @@ function LoginForm({
 
       setLoading(true);
       try {
-         // API expects an email. If a username was entered, reject with a friendly hint.
          if (!isEmail) {
             throw new Error("Please use your email address to log in.");
          }

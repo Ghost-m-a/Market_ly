@@ -1,12 +1,11 @@
 import type { Metadata } from "next";
-// @ts-expect-error Next.js processes this global stylesheet import at build time.
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-   title: "Whop",
+   title: "Market_ly",
    description: "The platform for creators and businesses.",
 };
 

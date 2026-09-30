@@ -1,5 +1,5 @@
 {
-   "name": "whop-app",
+   "name": "Market_ly",
    "version": "0.1.0",
    "private": true,
    "prisma": {
@@ -19,12 +19,16 @@
       "@prisma/adapter-pg": "^7.10.0",
       "@prisma/client": "^7.10.0",
       "@prisma/prisma7": "^7.10.0",
-      "next": "15.1.0",
+      "next": "^15.5.26",
       "next-auth": "^5.0.0-beta.25",
       "pg": "^8.23.1",
       "prisma": "^7.10.0",
-      "react": "19.0.0",
-      "react-dom": "19.0.0"
+      "react": "^19.0.1",
+      "react-dom": "^19.0.1"
+   },
+   "overrides": {
+      "deepmerge-ts": ">=8.0.0",
+      "mysql2": ">=3.23.1"
    },
    "devDependencies": {
       "@types/node": "^20",

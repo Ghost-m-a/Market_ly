@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+// @ts-expect-error - Global CSS imports are supported by Next.js
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
 import Header from "@/components/Header";

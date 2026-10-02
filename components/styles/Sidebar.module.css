@@ -1,3 +1,12 @@
+/* ============================================================
+   Sidebar.module.css
+
+   Three states:
+   1. Full sidebar       → .sidebar
+   2. Shrunk (icons)     → .sidebar.collapsed
+   3. Mobile bottom bar  → @media (max-width: 860px)
+============================================================ */
+
 /* ================================
    Backdrop (mobile)
 ================================ */
@@ -5,14 +14,38 @@
    display: none;
    position: fixed;
    inset: 0;
-   background: rgba(15, 20, 25, 0.5);
+   background: rgba(15, 23, 42, 0.45);
+   -webkit-backdrop-filter: blur(6px);
+   backdrop-filter: blur(6px);
    z-index: 45;
 }
 
 /* ================================
-   Sidebar shell
+   1. FULL SIDEBAR
 ================================ */
 .sidebar {
+   /* ---------- Design tokens ---------- */
+   --glass-surface: linear-gradient(
+      160deg,
+      rgba(255, 255, 255, 0.72),
+      rgba(255, 255, 255, 0.4)
+   );
+   --glass-solid: #f2f4fa;
+   --glass-edge: rgba(15, 23, 42, 0.08);
+   --glass-hairline: rgba(255, 255, 255, 0.55);
+   --glass-hover: rgba(15, 23, 42, 0.055);
+   --glass-shadow:
+      0 24px 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+   --glass-blur: blur(24px) saturate(160%);
+
+   --accent-1: #6366f1;
+   --accent-2: #4f46e5;
+   --accent-text: #4f46e5;
+   --accent-soft: rgba(99, 102, 241, 0.14);
+   --accent-ring: rgba(99, 102, 241, 0.35);
+   --accent-glow: rgba(79, 70, 229, 0.4);
+
+   /* ---------- Layout ---------- */
    position: fixed;
    top: var(--navbar-height);
    left: 0;
@@ -21,19 +54,45 @@
    display: flex;
    flex-direction: column;
    padding: 0.75rem 0.75rem 0.5rem;
-   background: var(--color-surface);
-   border-right: 1px solid var(--color-border);
+
+   background: var(--glass-surface);
+   border-right: 1px solid var(--glass-edge);
+   box-shadow: var(--glass-shadow);
+   -webkit-backdrop-filter: var(--glass-blur);
+   backdrop-filter: var(--glass-blur);
+
    overflow-y: auto;
    overflow-x: visible;
    z-index: 50;
    transition:
       width 0.2s ease,
-      padding 0.2s ease;
+      padding 0.2s ease,
+      background 0.2s ease;
 }
 
-.collapsed {
-   width: 64px;
-   padding: 0.75rem 0.5rem 0.5rem;
+:global([data-theme="dark"]) .sidebar {
+   --glass-surface: linear-gradient(
+      160deg,
+      rgba(32, 38, 58, 0.7),
+      rgba(18, 22, 36, 0.5)
+   );
+   --glass-solid: #141a2a;
+   --glass-edge: rgba(255, 255, 255, 0.08);
+   --glass-hairline: rgba(255, 255, 255, 0.1);
+   --glass-hover: rgba(255, 255, 255, 0.07);
+   --glass-shadow:
+      0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+   --accent-text: #a5b4fc;
+   --accent-soft: rgba(99, 102, 241, 0.22);
+   --accent-ring: rgba(129, 140, 248, 0.4);
+}
+
+@supports not (
+   (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+) {
+   .sidebar {
+      background: var(--glass-solid);
+   }
 }
 
 /* ================================
@@ -53,26 +112,34 @@
    height: 40px;
    display: grid;
    place-items: center;
-   border: 1px solid var(--color-border);
-   border-radius: 10px;
-   background: var(--color-surface);
+   border: 1px solid var(--glass-edge);
+   border-radius: 12px;
+   background: rgba(255, 255, 255, 0.4);
    color: var(--color-text-secondary);
    cursor: pointer;
    flex-shrink: 0;
    transition:
       background 0.14s,
       border-color 0.14s,
-      color 0.14s;
+      color 0.14s,
+      box-shadow 0.14s;
+}
+
+:global([data-theme="dark"]) .workspaceBtn {
+   background: rgba(255, 255, 255, 0.06);
 }
 
 .workspaceBtn:hover {
-   background: var(--color-background);
+   background: var(--glass-hover);
 }
 
 .workspaceBtnActive {
-   border-color: var(--color-text);
-   color: var(--color-text);
-   border-width: 2px;
+   border-color: var(--accent-ring);
+   color: var(--accent-text);
+   background: var(--accent-soft);
+   box-shadow:
+      0 0 0 3px var(--accent-soft),
+      0 8px 20px var(--accent-glow);
 }
 
 .workspacePill {
@@ -83,45 +150,37 @@
    display: flex;
    align-items: center;
    justify-content: center;
-   border: 1px solid transparent;
-   border-radius: 10px;
-   background: #eff6ff;
-   color: #2563eb;
-   font-size: 0.85rem;
-   font-weight: 700;
-   letter-spacing: 0.6px;
+   border: 1px solid var(--glass-edge);
+   border-radius: 12px;
+   background: rgba(255, 255, 255, 0.4);
+   color: var(--accent-text);
    cursor: pointer;
    transition:
       background 0.14s,
-      border-color 0.14s;
+      border-color 0.14s,
+      box-shadow 0.14s,
+      filter 0.14s;
+}
+
+:global([data-theme="dark"]) .workspacePill {
+   background: rgba(255, 255, 255, 0.06);
 }
 
 .workspacePill:hover {
-   background: #dbeafe;
+   background: var(--glass-hover);
 }
 
 .workspacePillActive {
-   border-color: #2563eb;
-   background: #dbeafe;
+   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+   border-color: rgba(255, 255, 255, 0.28);
+   color: #ffffff;
+   box-shadow:
+      0 8px 20px var(--accent-glow),
+      inset 0 1px 0 rgba(255, 255, 255, 0.35);
 }
 
-:root[data-theme="dark"] .workspacePill {
-   background: rgba(37, 99, 235, 0.15);
-   color: #93c5fd;
-}
-
-:root[data-theme="dark"] .workspacePill:hover,
-:root[data-theme="dark"] .workspacePillActive {
-   background: rgba(37, 99, 235, 0.25);
-}
-
-.collapsed .workspacePill,
-.collapsed .addBtn {
-   display: none;
-}
-
-.collapsed .workspaceRow {
-   justify-content: center;
+.workspacePillActive:hover {
+   filter: brightness(1.08);
 }
 
 .addBtn {
@@ -129,19 +188,24 @@
    height: 40px;
    display: grid;
    place-items: center;
-   border: none;
-   border-radius: 10px;
-   background: var(--color-background);
+   border: 1px solid var(--glass-edge);
+   border-radius: 12px;
+   background: rgba(255, 255, 255, 0.4);
    color: var(--color-text-secondary);
    cursor: pointer;
    flex-shrink: 0;
    transition:
       background 0.14s,
-      color 0.14s;
+      color 0.14s,
+      border-color 0.14s;
+}
+
+:global([data-theme="dark"]) .addBtn {
+   background: rgba(255, 255, 255, 0.06);
 }
 
 .addBtn:hover {
-   background: var(--color-border);
+   background: var(--glass-hover);
    color: var(--color-text);
 }
 
@@ -160,14 +224,16 @@
 .group {
    display: flex;
    flex-direction: column;
-   gap: 1px;
+   gap: 2px;
    margin-bottom: 0.85rem;
 }
 
 .groupLabel {
-   padding: 0.5rem 0.65rem 0.5rem;
-   font-size: 0.75rem;
-   font-weight: 500;
+   padding: 0.5rem 0.65rem 0.4rem;
+   font-size: 0.68rem;
+   font-weight: 600;
+   letter-spacing: 0.08em;
+   text-transform: uppercase;
    color: var(--color-text-muted);
 }
 
@@ -181,8 +247,8 @@
    gap: 0.7rem;
    width: 100%;
    padding: 0.55rem 0.65rem;
-   border: none;
-   border-radius: 8px;
+   border: 1px solid transparent;
+   border-radius: 10px;
    background: transparent;
    color: var(--color-text-secondary);
    font-size: 0.875rem;
@@ -191,19 +257,35 @@
    text-decoration: none;
    cursor: pointer;
    transition:
-      background 0.12s,
-      color 0.12s;
+      background 0.14s,
+      color 0.14s,
+      border-color 0.14s,
+      box-shadow 0.14s;
 }
 
 .item:hover {
-   background: var(--color-background);
+   background: var(--glass-hover);
+   border-color: var(--glass-hairline);
    color: var(--color-text);
+   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+:global([data-theme="dark"]) .item:hover {
+   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06);
 }
 
 .itemActive {
-   background: var(--color-background);
-   color: var(--color-text);
+   background: linear-gradient(
+      135deg,
+      var(--accent-soft),
+      rgba(99, 102, 241, 0.05)
+   );
+   border-color: var(--accent-ring);
+   color: var(--accent-text);
    font-weight: 600;
+   box-shadow:
+      0 4px 14px rgba(79, 70, 229, 0.16),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 
 .itemIcon {
@@ -212,6 +294,7 @@
    flex-shrink: 0;
    width: 20px;
    height: 20px;
+   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .itemLabel {
@@ -225,21 +308,19 @@
 /* Badges */
 .badge {
    padding: 2px 8px;
-   border-radius: 6px;
+   border-radius: 999px;
    font-size: 0.65rem;
    font-weight: 700;
    letter-spacing: 0.2px;
+   color: #ffffff;
    flex-shrink: 0;
+   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
+   box-shadow: 0 4px 10px var(--accent-glow);
 }
 
-.badgeNew {
-   background: #2563eb;
-   color: #ffffff;
-}
-
+.badgeNew,
 .badgeBeta {
-   background: #2563eb;
-   color: #ffffff;
+   background: linear-gradient(135deg, var(--accent-1), var(--accent-2));
 }
 
 /* ================================
@@ -251,8 +332,8 @@
    gap: 0.7rem;
    width: 100%;
    padding: 0.55rem 0.65rem;
-   border: none;
-   border-radius: 8px;
+   border: 1px solid transparent;
+   border-radius: 10px;
    background: transparent;
    color: var(--color-text-secondary);
    font-size: 0.875rem;
@@ -260,13 +341,15 @@
    text-align: left;
    cursor: pointer;
    transition:
-      background 0.12s,
-      color 0.12s;
+      background 0.14s,
+      color 0.14s,
+      border-color 0.14s;
    margin-bottom: 0.35rem;
 }
 
 .moreBtn:hover {
-   background: var(--color-background);
+   background: var(--glass-hover);
+   border-color: var(--glass-hairline);
    color: var(--color-text);
 }
 
@@ -278,6 +361,7 @@
    letter-spacing: 1px;
    line-height: 1;
    color: var(--color-text-muted);
+   transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .moreChevron {
@@ -291,9 +375,10 @@
 .subGroup {
    display: flex;
    flex-direction: column;
-   gap: 1px;
-   padding-left: 0.65rem;
+   gap: 2px;
+   padding: 0.25rem;
    margin-bottom: 0.85rem;
+   border-radius: 12px;
 }
 
 .subItem {
@@ -302,6 +387,7 @@
    justify-content: space-between;
    gap: 0.5rem;
    padding: 0.5rem 0.65rem;
+   border: 1px solid transparent;
    border-radius: 8px;
    color: var(--color-text-secondary);
    font-size: 0.85rem;
@@ -309,16 +395,18 @@
    text-decoration: none;
    transition:
       background 0.12s,
-      color 0.12s;
+      color 0.12s,
+      border-color 0.12s;
 }
 
 .subItem:hover {
-   background: var(--color-background);
+   background: var(--glass-hover);
+   border-color: var(--glass-hairline);
    color: var(--color-text);
 }
 
 .subItemActive {
-   color: var(--color-text);
+   color: var(--accent-text);
    font-weight: 600;
 }
 
@@ -334,82 +422,142 @@
 .bottom {
    margin-top: auto;
    padding-top: 0.75rem;
-   border-top: 1px solid var(--color-border);
+   border-top: 1px solid var(--glass-edge);
    display: flex;
    flex-direction: column;
-   gap: 1px;
+   gap: 2px;
    flex-shrink: 0;
 }
 
 .bottomRow {
-   display: flex;
-   align-items: center;
-   gap: 0.25rem;
-}
-
-.bottomRow .item {
-   flex: 1;
-   min-width: 0;
-}
-
-.collapseBtn {
-   width: 28px;
-   height: 28px;
-   display: grid;
-   place-items: center;
-   border: none;
-   border-radius: 6px;
-   background: transparent;
-   color: var(--color-text-muted);
-   cursor: pointer;
-   flex-shrink: 0;
-   transition:
-      background 0.12s,
-      color 0.12s;
-}
-
-.collapseBtn:hover {
-   background: var(--color-background);
-   color: var(--color-text);
+   display: contents;
 }
 
 /* ================================
-   Collapsed state
+   Collapse / Expand button
 ================================ */
+.collapseBtn {
+   position: relative;
+   display: flex;
+   align-items: center;
+   gap: 0.7rem;
+   width: 100%;
+   padding: 0.55rem 0.65rem;
+   margin-top: 0.25rem;
+   border: 1px solid var(--glass-edge);
+   border-radius: 10px;
+   background: rgba(255, 255, 255, 0.4);
+   color: var(--color-text-secondary);
+   font-size: 0.85rem;
+   font-weight: 500;
+   text-align: left;
+   cursor: pointer;
+   flex-shrink: 0;
+   transition:
+      background 0.14s,
+      border-color 0.14s,
+      color 0.14s,
+      box-shadow 0.14s;
+}
+
+:global([data-theme="dark"]) .collapseBtn {
+   background: rgba(255, 255, 255, 0.05);
+}
+
+.collapseBtn:hover {
+   background: var(--glass-hover);
+   border-color: var(--accent-ring);
+   color: var(--accent-text);
+   box-shadow: 0 4px 14px rgba(79, 70, 229, 0.14);
+}
+
+.collapseIcon {
+   display: grid;
+   place-items: center;
+   width: 20px;
+   height: 20px;
+   flex-shrink: 0;
+   transition: transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.collapseLabel {
+   flex: 1;
+   min-width: 0;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+/* ============================================================
+   2. SHRUNK (collapsed) — icons only
+============================================================ */
+.collapsed {
+   width: 64px;
+   padding: 0.75rem 0.5rem 0.5rem;
+}
+
+.collapsed .workspacePill,
+.collapsed .addBtn {
+   display: none;
+}
+
+.collapsed .workspaceRow {
+   justify-content: center;
+}
+
 .collapsed .item {
    justify-content: center;
    padding: 0.6rem;
-}
-
-.collapsed .bottomRow {
-   flex-direction: column;
-   gap: 0.4rem;
-}
-
-.collapsed .bottomRow .item {
-   flex: none;
-   width: 100%;
-}
-
-.collapsed .collapseBtn {
-   align-self: center;
 }
 
 .collapsed .moreBtn {
    justify-content: center;
 }
 
-/* ================================
-   Tooltips (when collapsed)
-================================ */
+.collapsed .collapseBtn {
+   justify-content: center;
+   padding: 0.6rem;
+}
+
+.collapsed .collapseBtn .collapseLabel {
+   display: none;
+}
+
+/* --- Hover scale on icon --- */
+.collapsed .item:hover .itemIcon,
+.collapsed .moreBtn:hover .moreDots {
+   transform: scale(1.25);
+}
+
+.collapsed .item:hover,
+.collapsed .moreBtn:hover {
+   background: var(--glass-hover);
+   border-color: var(--glass-hairline);
+   color: var(--color-text);
+}
+
+/* Nudge the icon outward on hover to hint the direction of travel */
+.collapsed .collapseBtn:hover .collapseIcon {
+   transform: scale(1.15) translateX(2px);
+}
+
+.sidebar:not(.collapsed) .collapseBtn:hover .collapseIcon {
+   transform: scale(1.15) translateX(-2px);
+}
+
+/* --- Tooltip (name reveal) --- */
 .tooltip {
    position: absolute;
    left: calc(100% + 10px);
    top: 50%;
-   transform: translateY(-50%) translateX(-4px);
+   transform: translateY(-50%) translateX(-6px) scale(0.96);
    padding: 6px 10px;
-   border-radius: 7px;
-   background: #1a1a1a;
+   border-radius: 8px;
+   background: linear-gradient(
+      145deg,
+      rgba(26, 26, 26, 0.96),
+      rgba(26, 26, 26, 0.88)
+   );
    color: #ffffff;
    font-size: 0.75rem;
    font-weight: 500;
@@ -417,9 +565,13 @@
    opacity: 0;
    pointer-events: none;
    z-index: 100;
+   border: 1px solid rgba(255, 255, 255, 0.12);
+   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+   -webkit-backdrop-filter: blur(12px);
+   backdrop-filter: blur(12px);
    transition:
-      opacity 0.12s ease,
-      transform 0.12s ease;
+      opacity 0.14s ease,
+      transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
 
 .tooltip::before {
@@ -429,70 +581,301 @@
    top: 50%;
    transform: translateY(-50%);
    border: 5px solid transparent;
-   border-right-color: #1a1a1a;
+   border-right-color: rgba(26, 26, 26, 0.96);
 }
 
-.item:hover .tooltip,
-.workspaceBtn:hover .tooltip {
+.collapsed .item:hover .tooltip,
+.collapsed .workspaceBtn:hover .tooltip,
+.collapsed .collapseBtn:hover .tooltip {
    opacity: 1;
-   transform: translateY(-50%) translateX(0);
+   transform: translateY(-50%) translateX(0) scale(1);
 }
 
-:root[data-theme="dark"] .tooltip {
-   background: #2a2a2a;
+:global([data-theme="dark"]) .tooltip {
+   background: linear-gradient(
+      145deg,
+      rgba(42, 42, 42, 0.96),
+      rgba(42, 42, 42, 0.88)
+   );
    color: #ededed;
 }
 
-:root[data-theme="dark"] .tooltip::before {
-   border-right-color: #2a2a2a;
+:global([data-theme="dark"]) .tooltip::before {
+   border-right-color: rgba(42, 42, 42, 0.96);
 }
 
-/* ================================
-   Mobile
-================================ */
+/* ============================================================
+   3. MOBILE — icon-only bottom navigation bar
+============================================================ */
 @media (max-width: 860px) {
    .backdrop {
-      display: block;
+      display: none;
    }
 
-   .sidebar {
-      top: 0;
-      width: 260px;
-      max-width: 80vw;
-      z-index: 55;
-      transform: translateX(-100%);
-      transition: transform 0.25s ease;
-   }
-
-   .mobileOpen {
-      transform: translateX(0);
-   }
-
-   .collapsed {
-      width: 260px;
-      padding: 0.75rem 0.75rem 0.5rem;
-   }
-
-   .collapsed .workspacePill,
-   .collapsed .addBtn {
-      display: flex;
-   }
-
-   .collapsed .item {
-      justify-content: flex-start;
-      padding: 0.55rem 0.65rem;
-   }
-
-   .collapsed .bottomRow {
+   /* ---------- Bar shell ---------- */
+   .sidebar,
+   .sidebar.collapsed {
+      top: auto;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: auto;
+      min-height: 60px;
       flex-direction: row;
+      align-items: center;
       gap: 0.25rem;
+      padding: 0.4rem 0.6rem calc(0.4rem + env(safe-area-inset-bottom));
+
+      border-right: none;
+      border-top: 1px solid var(--glass-edge);
+      box-shadow:
+         0 -8px 32px rgba(15, 23, 42, 0.1),
+         inset 0 1px 0 rgba(255, 255, 255, 0.5);
+
+      overflow: hidden;
+      transform: none;
+      transition: none;
+      z-index: 55;
    }
 
+   :global([data-theme="dark"]) .sidebar,
+   :global([data-theme="dark"]) .sidebar.collapsed {
+      box-shadow:
+         0 -8px 32px rgba(0, 0, 0, 0.5),
+         inset 0 1px 0 rgba(255, 255, 255, 0.06);
+   }
+
+   /* ---------- Nav = scrollable row of icons (left side) ---------- */
+   .nav {
+      order: 1;
+      flex: 1;
+      min-width: 0;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-evenly;
+      gap: 0;
+      padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      scroll-snap-type: x proximity;
+   }
+
+   .nav::-webkit-scrollbar {
+      display: none;
+   }
+
+   .group {
+      flex-direction: row;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 0;
+      flex-shrink: 0;
+   }
+
+   .groupLabel {
+      display: none;
+   }
+
+   /* ---------- Items: ICON ONLY, no text ---------- */
+   .item,
+   .collapsed .item {
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      padding: 0;
+      border-radius: 12px;
+      scroll-snap-align: center;
+      transform: none;
+   }
+
+   .collapsed .item:hover .itemIcon {
+      transform: none;
+   }
+
+   .itemIcon {
+      width: 24px;
+      height: 24px;
+   }
+
+   .itemLabel {
+      display: none;
+   }
+
+   /* Badge floats top-right of the icon */
+   .badge {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      padding: 1px 5px;
+      font-size: 0.55rem;
+      line-height: 1.4;
+      border-radius: 999px;
+      box-shadow:
+         0 0 0 2px var(--glass-solid, #ffffff),
+         0 2px 6px rgba(0, 0, 0, 0.25);
+   }
+
+   /* ---------- "More" button (icon only) ---------- */
+   .moreBtn,
    .collapsed .moreBtn {
-      justify-content: flex-start;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+      gap: 0;
+      width: 44px;
+      height: 44px;
+      flex: 0 0 auto;
+      padding: 0;
+      margin-bottom: 0;
+      border-radius: 12px;
    }
 
+   .collapsed .moreBtn:hover .moreDots {
+      transform: none;
+   }
+
+   .moreDots {
+      width: auto;
+      font-size: 1.35rem;
+      letter-spacing: 0;
+      line-height: 1;
+   }
+
+   .moreChevron {
+      display: none;
+   }
+
+   /* ---------- Workspace switcher: show both icons on mobile ---------- */
+   .workspaceRow,
+   .collapsed .workspaceRow {
+      display: flex;
+      order: 2;
+      flex: 0 0 auto;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      gap: 0.35rem;
+      margin-left: 0.35rem;
+   }
+
+   /* Hide add button, show both workspace buttons as circles */
+   .addBtn,
+   .collapsed .addBtn {
+      display: none;
+   }
+
+   .workspaceBtn,
+   .workspacePill,
+   .collapsed .workspacePill {
+      display: flex;
+      flex: 0 0 auto;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border-radius: 50%;
+      align-items: center;
+      justify-content: center;
+   }
+
+   /* ---------- Bottom block (settings link only) ---------- */
+   .bottom,
+   .collapsed .bottom {
+      order: 1;
+      margin-top: 0;
+      padding-top: 0;
+      border-top: none;
+      flex-direction: row;
+      align-items: center;
+      gap: 0;
+      flex-shrink: 0;
+   }
+
+   .bottomRow,
+   .collapsed .bottomRow {
+      display: contents;
+   }
+
+   .bottomRow .item,
+   .collapsed .bottomRow .item {
+      flex: 0 0 auto;
+      width: 44px;
+      height: 44px;
+   }
+
+   /* Collapse toggle hidden on mobile */
+   .collapseBtn,
+   .collapsed .collapseBtn {
+      display: none;
+   }
+
+   /* ---------- Submenu (More) floats as a sheet above the bar ---------- */
+   .subGroup {
+      position: fixed;
+      left: 0.5rem;
+      right: 0.5rem;
+      bottom: calc(72px + env(safe-area-inset-bottom));
+      padding: 0.4rem;
+      margin-bottom: 0;
+
+      background: var(--glass-surface);
+      border: 1px solid var(--glass-edge);
+      border-radius: 18px;
+      box-shadow: var(--glass-shadow);
+      -webkit-backdrop-filter: var(--glass-blur);
+      backdrop-filter: var(--glass-blur);
+
+      max-height: 55vh;
+      overflow-y: auto;
+      z-index: 60;
+   }
+
+   @supports not (
+      (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))
+   ) {
+      .subGroup {
+         background: var(--glass-solid);
+      }
+   }
+
+   .subItem {
+      padding: 0.75rem 0.85rem;
+      font-size: 0.9rem;
+   }
+
+   /* ---------- Tooltips are useless on touch ---------- */
    .tooltip {
       display: none;
+   }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+   .item,
+   .collapsed .item,
+   .bottomRow .item,
+   .collapsed .bottomRow .item,
+   .moreBtn,
+   .collapsed .moreBtn {
+      width: 40px;
+      height: 40px;
+   }
+
+   .itemIcon {
+      width: 22px;
+      height: 22px;
+   }
+
+   .workspaceBtn,
+   .workspacePill,
+   .collapsed .workspacePill {
+      width: 36px;
+      height: 36px;
    }
 }

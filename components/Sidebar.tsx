@@ -34,6 +34,12 @@ const IconUser = () => (
       <circle cx="12" cy="7" r="4" />
    </Svg>
 );
+const IconBriefcase = () => (
+   <Svg>
+      <rect x="2" y="7" width="20" height="14" rx="2" />
+      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+   </Svg>
+);
 const IconHome = () => (
    <Svg>
       <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z" />
@@ -136,11 +142,6 @@ const IconPlus = () => (
       <path d="M12 5v14M5 12h14" />
    </Svg>
 );
-const IconCode = () => (
-   <Svg>
-      <path d="m16 18 6-6-6-6M8 6l-6 6 6 6" />
-   </Svg>
-);
 const IconSettings = () => (
    <Svg>
       <circle cx="12" cy="12" r="3" />
@@ -166,6 +167,12 @@ const IconPanel = () => (
    <Svg size={16}>
       <rect x="3" y="3" width="18" height="18" rx="2" />
       <path d="M9 3v18" />
+   </Svg>
+);
+const IconPanelFlip = () => (
+   <Svg size={16}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <path d="M15 3v18" />
    </Svg>
 );
 
@@ -243,6 +250,7 @@ type Props = {
    mobileOpen: boolean;
    onToggleCollapse: () => void;
    onCloseMobile: () => void;
+   onAddWorkspace?: () => void;
 };
 
 /* ---------- Component ---------- */
@@ -251,21 +259,13 @@ export default function Sidebar({
    mobileOpen,
    onToggleCollapse,
    onCloseMobile,
+   onAddWorkspace,
 }: Props) {
    const pathname = usePathname();
    const { user } = useAuth();
 
    const [workspace, setWorkspace] = useState<Workspace>("personal");
    const [moreOpen, setMoreOpen] = useState(false);
-
-   const initials = user
-      ? user.name
-           .split(" ")
-           .map((n) => n[0])
-           .slice(0, 2)
-           .join("")
-           .toUpperCase()
-      : "SL";
 
    const isActive = (href: string) => {
       if (href === "/dashboard") return pathname === "/dashboard";
@@ -320,6 +320,7 @@ export default function Sidebar({
          >
             {/* ============ Workspace switcher ============ */}
             <div className={styles.workspaceRow}>
+               {/* Personal Workspace Button */}
                <button
                   type="button"
                   className={`${styles.workspaceBtn} ${
@@ -332,19 +333,28 @@ export default function Sidebar({
                   <IconUser />
                </button>
 
+               {/* Business Workspace Button (Icon instead of initials) */}
                <button
                   type="button"
                   className={`${styles.workspacePill} ${
                      workspace === "business" ? styles.workspacePillActive : ""
                   }`}
                   onClick={() => setWorkspace("business")}
-                  title="Spark & Learn"
+                  aria-label="Business workspace"
+                  title="Business"
                >
-                  {initials}
+                  <IconBriefcase />
                </button>
 
+               {/* Add Workspace Button */}
                {!collapsed && (
-                  <button className={styles.addBtn} aria-label="Add workspace">
+                  <button
+                     type="button"
+                     className={styles.addBtn}
+                     onClick={onAddWorkspace}
+                     aria-label="Add workspace"
+                     title="Add business"
+                  >
                      <IconPlus />
                   </button>
                )}
@@ -443,50 +453,39 @@ export default function Sidebar({
             {/* ============ Bottom ============ */}
             <div className={styles.bottom}>
                <Link
-                  href="/dashboard/developer"
+                  href="/dashboard/settings"
                   className={`${styles.item} ${
-                     isActive("/dashboard/developer") ? styles.itemActive : ""
+                     isActive("/dashboard/settings") ? styles.itemActive : ""
                   }`}
                   onClick={onCloseMobile}
+                  title={collapsed ? "Settings" : undefined}
                >
                   <span className={styles.itemIcon}>
-                     <IconCode />
+                     <IconSettings />
                   </span>
                   {!collapsed && (
-                     <span className={styles.itemLabel}>Developer</span>
+                     <span className={styles.itemLabel}>Settings</span>
                   )}
                   {collapsed && (
-                     <span className={styles.tooltip}>Developer</span>
+                     <span className={styles.tooltip}>Settings</span>
                   )}
                </Link>
 
-               <div className={styles.bottomRow}>
-                  <Link
-                     href="/dashboard/settings"
-                     className={`${styles.item} ${
-                        isActive("/dashboard/settings") ? styles.itemActive : ""
-                     }`}
-                     onClick={onCloseMobile}
-                  >
-                     <span className={styles.itemIcon}>
-                        <IconSettings />
-                     </span>
-                     {!collapsed && (
-                        <span className={styles.itemLabel}>Settings</span>
-                     )}
-                     {collapsed && (
-                        <span className={styles.tooltip}>Settings</span>
-                     )}
-                  </Link>
-
-                  <button
-                     className={styles.collapseBtn}
-                     onClick={onToggleCollapse}
-                     aria-label="Toggle sidebar"
-                  >
-                     <IconPanel />
-                  </button>
-               </div>
+               <button
+                  type="button"
+                  className={styles.collapseBtn}
+                  onClick={onToggleCollapse}
+                  aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                  title={collapsed ? "Expand" : "Collapse"}
+               >
+                  <span className={styles.collapseIcon}>
+                     {collapsed ? <IconPanel /> : <IconPanelFlip />}
+                  </span>
+                  {!collapsed && (
+                     <span className={styles.collapseLabel}>Collapse</span>
+                  )}
+                  {collapsed && <span className={styles.tooltip}>Expand</span>}
+               </button>
             </div>
          </aside>
       </>

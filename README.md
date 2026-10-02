@@ -38,7 +38,7 @@ EMAIL_FROM="Market_ly <no-reply@your-verified-domain.com>"
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Apply pending migrations with `npx prisma7 migrate deploy`. Reset links expire after one hour and can only be used once.
+Reset links expire after one hour and can only be used once.
 
 ## Email Verification and Admin Access
 
@@ -52,17 +52,19 @@ npm run admin:create
 
 This creates the admin account or promotes the matching email and sets its password. Keep these variables out of source control. The admin console is available at `/dashboard/admin` after signing in.
 
-The case-insensitive email index prevents duplicate addresses that differ only by letter casing. If existing production data contains such duplicates, resolve them before applying the migration.
-
-The contribution and transaction schema migration is in `prisma/migrations/20261002053259_add_messaging_notifications_contributions`.
+Signup normalizes email addresses, and MongoDB enforces uniqueness on the normalized address.
 
 ## Workspace and Community Data
 
-Authentication, campaigns, and credits remain in PostgreSQL. Workspace selection, Townhall posts, partner requests, and affiliate links use MongoDB. Configure `MONGODB_URI` and optionally `MONGODB_DATABASE` in `.env`; the MongoDB deployment must be reachable by the app. These features return a configuration error rather than displaying sample records when MongoDB is unavailable.
+The whole application uses MongoDB through Prisma 6. Set `MONGODB_URI` to a MongoDB replica-set connection. The app uses a valid `MONGODB_DATABASE` override when supplied, the database in the URI otherwise, and `marketly` as the fallback. Keep credentials in an ignored environment file. Transactions require a replica set; MongoDB Atlas provides one by default.
+
+The existing PostgreSQL database is preserved. The one-time importer copied the current users, campaigns, and campaign memberships into the URI-selected MongoDB database. To repeat or inspect a future copy, set `DATABASE_URL` to the PostgreSQL source, then run `npm run data:copy:dry-run` before `npm run data:copy:apply`. The importer is idempotent and preserves existing IDs.
+
+MongoDB has no Prisma Migrate workflow in Prisma 6. Run `npm run db:push` after schema changes to synchronize collections and indexes.
 
 ## Campaign Credits
 
-Apply all pending PostgreSQL migrations with `npx prisma7 migrate deploy`. Admins set the credit rate at `/dashboard/admin`; the launch charge is rounded up from `target views × credits per 1,000 views ÷ 1,000`. Credit debits/refunds and admin grants are recorded in the ledger. Credits are currently granted by admins; there is no credit-purchase flow.
+Admins set the credit rate at `/dashboard/admin`; the launch charge is rounded up from `target views × credits per 1,000 views ÷ 1,000`. Credit debits/refunds and admin grants are recorded in the ledger. Credits are currently granted by admins; there is no credit-purchase flow.
 
 ## Google Ads
 

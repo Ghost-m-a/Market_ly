@@ -33,7 +33,7 @@ export async function GET(
 
    const contributionAggregate = await prisma.campaignContributor.aggregate({
       where: { campaignId: id },
-      _sum: { contribution: true },
+      _sum: { contributionCents: true },
    });
 
    // Aggregate top clippers from submissions
@@ -83,10 +83,9 @@ export async function GET(
          referenceUrl: c.referenceUrl,
          minPayoutCents: c.minPayoutCents,
          maxPayoutCents: c.maxPayoutCents,
-         minimumContribution: Number(c.minimumContribution),
-         contributionTotal: Number(
-            contributionAggregate._sum.contribution ?? 0,
-         ),
+         minimumContribution: c.minimumContributionCents / 100,
+         contributionTotal:
+            (contributionAggregate._sum?.contributionCents ?? 0) / 100,
          isOwner:
             session?.user?.id === c.creatorId ||
             session?.user?.role === "ADMIN",
@@ -216,7 +215,20 @@ export async function PATCH(
             { status: 400 },
          );
       }
-      data.minimumContribution = minimumContribution;
+      const minimumContributionCents = Math.round(minimumContribution * 100);
+      if (
+         Math.abs(minimumContribution * 100 - minimumContributionCents) >
+         0.000001
+      ) {
+         return NextResponse.json(
+            {
+               message:
+                  "Minimum contribution must use at most two decimal places.",
+            },
+            { status: 400 },
+         );
+      }
+      data.minimumContributionCents = minimumContributionCents;
    }
    if (typeof body.status === "string") {
       const statuses = [

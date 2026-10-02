@@ -18,8 +18,8 @@ export async function GET() {
       return NextResponse.json(
          transactions.map((transaction) => ({
             ...transaction,
-            amount: Number(transaction.amount),
-            amountPaid: Number(transaction.amountPaid),
+            amount: transaction.amountCents / 100,
+            amountPaid: transaction.amountPaidCents / 100,
          })),
       );
    } catch (error) {

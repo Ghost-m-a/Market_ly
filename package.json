@@ -2,29 +2,28 @@
    "name": "Market_ly",
    "version": "0.1.0",
    "private": true,
-   "prisma": {
-      "seed": "tsx prisma/seed.ts"
-   },
    "scripts": {
       "dev": "next dev",
-      "build": "prisma7 generate && next build",
+      "build": "npm run prisma:generate && next build",
       "start": "next start",
       "lint": "next lint",
       "seed": "tsx prisma/seed.ts",
       "admin:create": "tsx prisma/create-admin.ts",
-      "postinstall": "prisma7 generate",
-      "vercel-build": "prisma7 migrate deploy && prisma7 generate && next build"
+      "prisma:generate": "node scripts/prisma-mongo-cli.mjs generate",
+      "db:push": "node scripts/prisma-mongo-cli.mjs db push",
+      "data:copy:dry-run": "node --import tsx prisma/copy-postgres-data-to-mongodb.ts",
+      "data:copy:apply": "node --import tsx prisma/copy-postgres-data-to-mongodb.ts --apply",
+      "postinstall": "npm run prisma:generate",
+      "vercel-build": "npm run prisma:generate && next build"
    },
    "dependencies": {
       "@auth/prisma-adapter": "^2.11.3",
-      "@prisma/adapter-pg": "^7.10.0",
-      "@prisma/client": "^7.10.0",
-      "@prisma/prisma7": "^7.10.0",
+      "@prisma/client": "6.19.3",
       "mongodb": "^7.7.0",
       "next": "^15.5.26",
       "next-auth": "^5.0.0-beta.25",
       "pg": "^8.23.1",
-      "prisma": "^7.10.0",
+      "prisma": "6.19.3",
       "react": "^19.0.1",
       "react-dom": "^19.0.1",
       "stripe": "^23.0.0"

@@ -106,7 +106,9 @@ export async function POST(req: Request) {
                coverImage: coverImage || null,
                description: description || null,
                budgetCents: Number(budgetCents),
-               minimumContribution: minimumContributionAmount,
+               minimumContributionCents: Math.round(
+                  minimumContributionAmount * 100,
+               ),
                targetViews: targetViewCount,
                campaignCostCredits: costCredits,
                rateTiktokCents: Number(rates?.tiktok ?? 0),

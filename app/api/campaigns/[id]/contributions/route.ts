@@ -39,7 +39,7 @@ export async function POST(
             title: true,
             creatorId: true,
             status: true,
-            minimumContribution: true,
+            minimumContributionCents: true,
          },
       });
 
@@ -62,10 +62,7 @@ export async function POST(
          );
       }
 
-      const minimumCents = Math.max(
-         100,
-         Math.ceil(Number(campaign.minimumContribution) * 100),
-      );
+      const minimumCents = Math.max(100, campaign.minimumContributionCents);
       if (amountCents < minimumCents) {
          return NextResponse.json(
             {
@@ -78,8 +75,8 @@ export async function POST(
       const stripe = getStripeClient();
       const transaction = await prisma.transaction.create({
          data: {
-            amount: amountCents / 100,
-            amountPaid: 0,
+            amountCents,
+            amountPaidCents: 0,
             currency: "USD",
             status: "PENDING",
             userId: session.user.id,

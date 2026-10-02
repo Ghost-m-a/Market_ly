@@ -1,23 +1,16 @@
 import { PrismaClient } from "@prisma/client";
-import { PrismaPg } from "@prisma/adapter-pg";
+import { config } from "dotenv";
+import { getMongoDatabaseUrl } from "./mongodb-url";
+
+config({ path: [".env.local", ".env"] });
 
 const globalForPrisma = globalThis as unknown as {
    prisma?: PrismaClient;
 };
 
 function createPrismaClient(): PrismaClient {
-   const connectionString = process.env.DATABASE_URL;
-
-   if (!connectionString) {
-      throw new Error(
-         "[prisma] DATABASE_URL is missing. Check your .env file at the project root.",
-      );
-   }
-
-   const adapter = new PrismaPg({ connectionString });
-
    return new PrismaClient({
-      adapter,
+      datasources: { db: { url: getMongoDatabaseUrl() } },
       log:
          process.env.NODE_ENV === "development" ? ["error", "warn"] : ["error"],
    });

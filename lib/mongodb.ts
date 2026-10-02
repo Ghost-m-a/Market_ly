@@ -1,14 +1,14 @@
 import { MongoClient } from "mongodb";
+import { getMongoDatabaseUrl } from "./mongodb-url";
 
 const globalMongo = globalThis as typeof globalThis & {
    mongoClientPromise?: Promise<MongoClient>;
 };
 
 export async function getMongoDatabase() {
-   const uri = process.env.MONGODB_URI;
-   if (!uri) throw new Error("MONGODB_URI is not configured.");
-
-   globalMongo.mongoClientPromise ??= new MongoClient(uri).connect();
+   globalMongo.mongoClientPromise ??= new MongoClient(
+      getMongoDatabaseUrl(),
+   ).connect();
    const client = await globalMongo.mongoClientPromise;
-   return client.db(process.env.MONGODB_DATABASE || undefined);
+   return client.db();
 }

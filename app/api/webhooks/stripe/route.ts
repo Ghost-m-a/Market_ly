@@ -28,7 +28,8 @@ async function completeCheckout(session: Stripe.Checkout.Session) {
       return;
    }
 
-   const amountPaid = session.amount_total / 100;
+   const amountPaidCents = session.amount_total;
+   const amountPaid = amountPaidCents / 100;
    const currency = session.currency.toLowerCase();
    const paymentId =
       typeof session.payment_intent === "string"
@@ -49,8 +50,7 @@ async function completeCheckout(session: Stripe.Checkout.Session) {
          transaction.status !== "PENDING" ||
          (transaction.providerRef !== null &&
             transaction.providerRef !== session.id) ||
-         Math.round(Number(transaction.amount) * 100) !==
-            session.amount_total ||
+         transaction.amountCents !== session.amount_total ||
          transaction.currency.toLowerCase() !== currency
       ) {
          return;
@@ -64,7 +64,7 @@ async function completeCheckout(session: Stripe.Checkout.Session) {
          },
          data: {
             status: "COMPLETED",
-            amountPaid,
+            amountPaidCents,
             paymentId,
             providerRef: session.id,
          },
@@ -84,9 +84,9 @@ async function completeCheckout(session: Stripe.Checkout.Session) {
          create: {
             campaignId: campaign.id,
             userId: transaction.userId,
-            contribution: amountPaid,
+            contributionCents: amountPaidCents,
          },
-         update: { contribution: { increment: amountPaid } },
+         update: { contributionCents: { increment: amountPaidCents } },
       });
 
       await tx.notification.createMany({

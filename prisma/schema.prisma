@@ -1,10 +1,10 @@
 generator client {
    provider      = "prisma-client-js"
-   binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 datasource db {
-   provider = "postgresql"
+   provider = "mongodb"
+   url      = env("MONGODB_URI")
 }
 
 // ================================
@@ -12,7 +12,7 @@ datasource db {
 // ================================
 
 model User {
-   id            String    @id @default(cuid())
+   id            String    @id @default(cuid()) @map("_id")
    name          String
    email         String    @unique
    emailVerified DateTime?
@@ -37,6 +37,7 @@ model User {
    contributions           CampaignContributor[]
    creditTransactions     CreditLedger[]
 
+   @@map("User")
 }
 
 enum UserRole {
@@ -45,43 +46,48 @@ enum UserRole {
 }
 
 model Account {
-   id                String  @id @default(cuid())
+   id                String  @id @default(cuid()) @map("_id")
    userId            String
    type              String
    provider          String
    providerAccountId String
-   refresh_token     String? @db.Text
-   access_token      String? @db.Text
+   refresh_token     String?
+   access_token      String?
    expires_at        Int?
    token_type        String?
    scope             String?
-   id_token          String? @db.Text
+   id_token          String?
    session_state     String?
 
    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
    @@unique([provider, providerAccountId])
+   @@map("Account")
 }
 
 model Session {
-   id           String   @id @default(cuid())
+   id           String   @id @default(cuid()) @map("_id")
    sessionToken String   @unique
    userId       String
    expires      DateTime
 
    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@map("Session")
 }
 
 model VerificationToken {
+   id         String   @id @default(cuid()) @map("_id")
    identifier String
    token      String   @unique
    expires    DateTime
 
    @@unique([identifier, token])
+   @@map("VerificationToken")
 }
 
 model PasswordResetToken {
-   id        String   @id @default(cuid())
+   id        String   @id @default(cuid()) @map("_id")
    userId    String
    tokenHash String   @unique
    expiresAt DateTime
@@ -91,10 +97,11 @@ model PasswordResetToken {
 
    @@index([userId])
    @@index([expiresAt])
+   @@map("PasswordResetToken")
 }
 
 model EmailVerificationToken {
-   id        String   @id @default(cuid())
+   id        String   @id @default(cuid()) @map("_id")
    userId    String
    tokenHash String   @unique
    expiresAt DateTime
@@ -104,6 +111,7 @@ model EmailVerificationToken {
 
    @@index([userId])
    @@index([expiresAt])
+   @@map("EmailVerificationToken")
 }
 
 // ================================
@@ -119,7 +127,7 @@ enum CampaignStatus {
 }
 
 model Campaign {
-   id String @id @default(cuid())
+   id String @id @default(cuid()) @map("_id")
 
    creatorId String
    creator   User   @relation("CampaignCreator", fields: [creatorId], references: [id], onDelete: Cascade)
@@ -130,15 +138,14 @@ model Campaign {
    brandLogo   String?
    coverImage  String?
    imageUrl    String?
-   description String? @db.Text
+   description String?
    category    String  @default("content")
    targetAudience String @default("")
 
    // Money — all in cents to avoid float issues
    budgetCents Int @default(0)
    spentCents  Int @default(0)
-   budget      Decimal @default(0) @db.Decimal(10, 2)
-   minimumContribution Decimal @default(0) @db.Decimal(10, 2)
+   minimumContributionCents Int @default(0)
    targetViews Int @default(0)
    campaignCostCredits Int @default(0)
 
@@ -157,7 +164,7 @@ model Campaign {
    maxPayoutCents Int @default(0)
 
    // Requirements & references
-   requirements  String? @db.Text
+   requirements  String?
    referenceUrl  String?
 
    status CampaignStatus @default(DRAFT)
@@ -173,10 +180,11 @@ model Campaign {
 
    @@index([status])
    @@index([creatorId])
+   @@map("Campaign")
 }
 
 model CampaignMember {
-   id String @id @default(cuid())
+   id String @id @default(cuid()) @map("_id")
 
    campaignId String
    userId     String
@@ -187,6 +195,7 @@ model CampaignMember {
 
    @@unique([campaignId, userId])
    @@index([userId])
+   @@map("CampaignMember")
 }
 
 enum SubmissionStatus {
@@ -197,7 +206,7 @@ enum SubmissionStatus {
 }
 
 model Submission {
-   id String @id @default(cuid())
+   id String @id @default(cuid()) @map("_id")
 
    campaignId String
    userId     String
@@ -217,9 +226,10 @@ model Submission {
    @@index([campaignId])
    @@index([userId])
    @@index([status])
+   @@map("Submission")
 }
 model Conversation {
-   id        String   @id @default(cuid())
+   id        String   @id @default(cuid()) @map("_id")
    title     String?
    isGroup   Boolean  @default(false)
    createdAt DateTime @default(now())
@@ -229,10 +239,11 @@ model Conversation {
    messages Message[]
 
    @@index([updatedAt])
+   @@map("Conversation")
 }
 
 model ConversationMember {
-   id             String   @id @default(cuid())
+   id             String   @id @default(cuid()) @map("_id")
    conversationId String
    userId         String
    joinedAt       DateTime @default(now())
@@ -243,15 +254,16 @@ model ConversationMember {
 
    @@unique([conversationId, userId])
    @@index([userId])
+   @@map("ConversationMember")
 }
 
 model Message {
-   id             String   @id @default(cuid())
+   id             String   @id @default(cuid()) @map("_id")
    conversationId String
    senderId       String
    recipientId    String?
-   body           String   @db.Text
-   content        String   @default("") @db.Text
+   body           String
+   content        String   @default("")
    messageType    String   @default("private")
    read           Boolean  @default(false)
    createdAt      DateTime @default(now())
@@ -264,10 +276,11 @@ model Message {
    @@index([conversationId, createdAt])
    @@index([senderId, createdAt])
    @@index([recipientId, createdAt])
+   @@map("Message")
 }
 
 model Notification {
-   id        String   @id @default(cuid())
+   id        String   @id @default(cuid()) @map("_id")
    userId    String
    title     String
    message   String
@@ -279,17 +292,18 @@ model Notification {
    user User @relation(fields: [userId], references: [id])
 
    @@index([userId, createdAt])
+   @@map("Notification")
 }
 
 model Transaction {
-   id          String   @id @default(cuid())
-   amount      Decimal  @db.Decimal(10, 2)
+   id          String   @id @default(cuid()) @map("_id")
+   amountCents Int
    currency    String   @default("USD")
    status      String
    paymentId   String?
    providerRef String?
    userId      String
-   amountPaid  Decimal  @default(0) @db.Decimal(10, 2)
+   amountPaidCents Int @default(0)
    campaignId  String?
    createdAt   DateTime @default(now())
    updatedAt   DateTime @updatedAt
@@ -299,13 +313,14 @@ model Transaction {
 
    @@index([userId, status])
    @@index([createdAt])
+   @@map("Transaction")
 }
 
 model CampaignContributor {
-   id           String   @id @default(cuid())
+   id           String   @id @default(cuid()) @map("_id")
    userId       String
    campaignId   String
-   contribution Decimal  @db.Decimal(10, 2)
+   contributionCents Int
    createdAt    DateTime @default(now())
 
    user     User     @relation(fields: [userId], references: [id])
@@ -313,16 +328,19 @@ model CampaignContributor {
 
    @@unique([campaignId, userId])
    @@index([campaignId])
+   @@map("CampaignContributor")
 }
 
 model CreditPricing {
-   id                       String   @id @default("default")
+   id                       String   @id @default("default") @map("_id")
    creditsPerThousandViews  Int      @default(0)
    updatedAt                DateTime @updatedAt
+
+   @@map("CreditPricing")
 }
 
 model CreditLedger {
-   id          String   @id @default(cuid())
+   id          String   @id @default(cuid()) @map("_id")
    userId      String
    campaignId  String?
    amount      Int
@@ -334,4 +352,5 @@ model CreditLedger {
 
    @@index([userId, createdAt])
    @@index([campaignId])
+   @@map("CreditLedger")
 }

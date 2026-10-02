@@ -8,6 +8,8 @@ import {
    type ChangeEvent,
    type FormEvent,
 } from "react";
+import { signIn } from "next-auth/react";
+
 import { useAuth } from "@/contexts/AuthContext";
 import "./styles/AuthFlipCard.css";
 
@@ -238,7 +240,7 @@ function OAuthRow({ mode }: { mode: "login" | "signup" }) {
             <button
                type="button"
                className="oauth-btn"
-               aria-label="Continue with Google"
+               onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
             >
                <GoogleIcon />
                <span>Google</span>
@@ -246,7 +248,7 @@ function OAuthRow({ mode }: { mode: "login" | "signup" }) {
             <button
                type="button"
                className="oauth-btn"
-               aria-label="Continue with Facebook"
+               onClick={() => signIn("facebook", { callbackUrl: "/dashboard" })}
             >
                <FacebookIcon />
                <span>Facebook</span>

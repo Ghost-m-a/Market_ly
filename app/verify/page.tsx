@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
-export default function VerifyPage() {
+function VerifyInner() {
    const params = useSearchParams();
    const token = params.get("token");
    const [message, setMessage] = useState("Verifying…");
@@ -20,6 +20,15 @@ export default function VerifyPage() {
    }, [token]);
 
    return (
+      <div style={{ maxWidth: 480, textAlign: "center" }}>
+         <h1 style={{ marginBottom: 12 }}>Email verification</h1>
+         <p style={{ color: "#666", lineHeight: 1.6 }}>{message}</p>
+      </div>
+   );
+}
+
+export default function VerifyPage() {
+   return (
       <main
          style={{
             minHeight: "100vh",
@@ -28,10 +37,9 @@ export default function VerifyPage() {
             padding: 24,
          }}
       >
-         <div style={{ maxWidth: 480, textAlign: "center" }}>
-            <h1 style={{ marginBottom: 12 }}>Email verification</h1>
-            <p style={{ color: "#666", lineHeight: 1.6 }}>{message}</p>
-         </div>
+         <Suspense fallback={<p>Loading…</p>}>
+            <VerifyInner />
+         </Suspense>
       </main>
    );
 }

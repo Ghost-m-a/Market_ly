@@ -58,9 +58,11 @@ function PlatformIcon({ platform }: { platform: Platform }) {
 export function CampaignCard({
    campaign,
    onClick,
+   onContribute,
 }: {
    campaign: CampaignSummary;
    onClick?: () => void;
+   onContribute?: () => void;
 }) {
    const pct =
       campaign.budgetCents > 0
@@ -144,6 +146,19 @@ export function CampaignCard({
                      style={{ width: `${pct}%` }}
                   />
                </div>
+            )}
+
+            {onContribute && campaign.status === "ACTIVE" && (
+               <button
+                  type="button"
+                  className={styles.contributeBtn}
+                  onClick={(event) => {
+                     event.stopPropagation();
+                     onContribute();
+                  }}
+               >
+                  Contribute
+               </button>
             )}
          </div>
       </article>

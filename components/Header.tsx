@@ -80,6 +80,15 @@ const IconChevronDown = () => (
    </Svg>
 );
 
+type NotificationItem = {
+   id: string;
+   title: string;
+   message: string;
+   read: boolean;
+   link: string | null;
+   createdAt: string;
+};
+
 export default function Header() {
    const { user, loading, logout } = useAuth();
    const router = useRouter();
@@ -88,9 +97,33 @@ export default function Header() {
    const [authOpen, setAuthOpen] = useState(false);
    const [searchOpen, setSearchOpen] = useState(false);
    const [notifOpen, setNotifOpen] = useState(false);
+   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
 
    const userRef = useRef<HTMLDivElement>(null);
    const notifRef = useRef<HTMLDivElement>(null);
+
+   useEffect(() => {
+      let active = true;
+      if (!user?.id) {
+         setNotifications([]);
+         return;
+      }
+
+      fetch(`/api/notifications?userId=${encodeURIComponent(user.id)}`, {
+         cache: "no-store",
+      })
+         .then((response) => (response.ok ? response.json() : []))
+         .then((items: NotificationItem[]) => {
+            if (active) setNotifications(items);
+         })
+         .catch(() => {
+            if (active) setNotifications([]);
+         });
+
+      return () => {
+         active = false;
+      };
+   }, [user?.id, notifOpen]);
 
    useEffect(() => {
       const onKey = (e: KeyboardEvent) => {
@@ -128,6 +161,29 @@ export default function Header() {
       await logout();
       router.push("/");
    };
+
+   const openNotification = async (notification: NotificationItem) => {
+      if (!notification.read) {
+         const response = await fetch("/api/notifications", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ notificationId: notification.id }),
+         });
+         if (response.ok) {
+            setNotifications((current) =>
+               current.map((item) =>
+                  item.id === notification.id ? { ...item, read: true } : item,
+               ),
+            );
+         }
+      }
+      setNotifOpen(false);
+      if (notification.link) router.push(notification.link);
+   };
+
+   const unreadCount = notifications.filter(
+      (notification) => !notification.read,
+   ).length;
 
    return (
       <>
@@ -181,22 +237,60 @@ export default function Header() {
                      onClick={() => setNotifOpen((o) => !o)}
                   >
                      <IconBell />
-                     <span className={styles.badge}>1</span>
+                     {unreadCount > 0 && (
+                        <span className={styles.badge}>
+                           {unreadCount > 9 ? "9+" : unreadCount}
+                        </span>
+                     )}
                      <span className={styles.tt}>Notifications</span>
                   </button>
 
                   {notifOpen && (
                      <div className={styles.notifMenu}>
-                        <div className={styles.notifHead}>Notifications</div>
-                        <div className={styles.notifItem}>
-                           <span className={styles.notifDot} />
-                           <div>
-                              <p className={styles.notifTitle}>
-                                 Welcome to Whop
-                              </p>
-                              <p className={styles.notifTime}>Just now</p>
-                           </div>
+                        <div className={styles.notifHead}>
+                           Notifications
+                           {unreadCount > 0 && (
+                              <span>{unreadCount} unread</span>
+                           )}
                         </div>
+                        {!user ? (
+                           <p className={styles.notifEmpty}>
+                              Sign in to view notifications.
+                           </p>
+                        ) : notifications.length === 0 ? (
+                           <p className={styles.notifEmpty}>
+                              You&apos;re all caught up.
+                           </p>
+                        ) : (
+                           <div className={styles.notifList}>
+                              {notifications.slice(0, 8).map((notification) => (
+                                 <button
+                                    key={notification.id}
+                                    className={`${styles.notifItem} ${notification.read ? styles.notifItemRead : ""}`}
+                                    onClick={() =>
+                                       openNotification(notification)
+                                    }
+                                 >
+                                    {!notification.read && (
+                                       <span className={styles.notifDot} />
+                                    )}
+                                    <span className={styles.notifCopy}>
+                                       <span className={styles.notifTitle}>
+                                          {notification.title}
+                                       </span>
+                                       <span className={styles.notifMessage}>
+                                          {notification.message}
+                                       </span>
+                                       <span className={styles.notifTime}>
+                                          {new Date(
+                                             notification.createdAt,
+                                          ).toLocaleString()}
+                                       </span>
+                                    </span>
+                                 </button>
+                              ))}
+                           </div>
+                        )}
                      </div>
                   )}
                </div>

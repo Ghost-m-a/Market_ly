@@ -204,6 +204,20 @@
    gap: 10px;
 }
 
+.creatorActions {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   flex-wrap: wrap;
+}
+
+.ownerActions {
+   display: flex;
+   align-items: center;
+   gap: 8px;
+   flex-wrap: wrap;
+}
+
 .joinBtn {
    padding: 9px 18px;
    border: 0;
@@ -223,6 +237,85 @@
 .joinBtn:disabled {
    opacity: 0.6;
    cursor: not-allowed;
+}
+
+.contributeAction {
+   padding: 9px 14px;
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   background: var(--color-surface);
+   color: var(--color-text);
+   font-size: 0.82rem;
+   font-weight: 600;
+   cursor: pointer;
+}
+
+.contributeAction:hover {
+   border-color: #f97316;
+   color: #c2410c;
+}
+
+.contributionBox {
+   display: grid;
+   gap: 8px;
+   padding: 14px 20px;
+   border-bottom: 1px solid var(--color-border);
+   background: var(--color-background);
+}
+
+.contributionBox label {
+   color: var(--color-text-secondary);
+   font-size: 0.78rem;
+   font-weight: 600;
+}
+
+.contributionControls {
+   display: flex;
+   gap: 8px;
+}
+
+.contributionControls input {
+   width: 140px;
+   min-width: 0;
+   padding: 0 10px;
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   background: var(--color-surface);
+   color: var(--color-text);
+   font: inherit;
+}
+
+.contributionBox p {
+   margin: 0;
+   color: var(--color-text-muted);
+   font-size: 0.75rem;
+}
+
+.contributionBox .contributionError {
+   color: #dc2626;
+}
+
+.deleteBtn {
+   padding: 9px 12px;
+   border: 1px solid rgba(220, 38, 38, 0.25);
+   border-radius: 8px;
+   background: transparent;
+   color: #dc2626;
+   font-size: 0.82rem;
+   font-weight: 600;
+   cursor: pointer;
+}
+
+.deleteBtn:disabled {
+   opacity: 0.6;
+   cursor: wait;
+}
+
+.actionError {
+   margin: 0;
+   padding: 8px 20px;
+   color: #dc2626;
+   font-size: 0.8rem;
 }
 
 .joinedBadge,

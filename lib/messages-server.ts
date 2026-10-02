@@ -171,15 +171,35 @@ export async function sendMessage(
       update: {},
    });
 
-   const msg = await prisma.message.create({
-      data: { conversationId, senderId, body: trimmed },
-      include: { sender: { select: { id: true, name: true, image: true } } },
+   const recipients = await prisma.conversationMember.findMany({
+      where: { conversationId, userId: { not: senderId } },
+      select: { userId: true },
    });
 
-   // Touch the conversation so it sorts to top
-   await prisma.conversation.update({
-      where: { id: conversationId },
-      data: { updatedAt: new Date() },
+   const msg = await prisma.$transaction(async (tx) => {
+      const created = await tx.message.create({
+         data: { conversationId, senderId, body: trimmed },
+         include: { sender: { select: { id: true, name: true, image: true } } },
+      });
+
+      await tx.conversation.update({
+         where: { id: conversationId },
+         data: { updatedAt: new Date() },
+      });
+
+      if (recipients.length > 0) {
+         await tx.notification.createMany({
+            data: recipients.map(({ userId }) => ({
+               userId,
+               title: `New message from ${created.sender.name}`,
+               message: trimmed,
+               type: "info",
+               link: `/dashboard/messages?c=${conversationId}`,
+            })),
+         });
+      }
+
+      return created;
    });
 
    return {

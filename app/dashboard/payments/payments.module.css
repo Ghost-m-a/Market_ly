@@ -1,0 +1,116 @@
+.stats {
+   display: grid;
+   grid-template-columns: repeat(3, minmax(0, 1fr));
+   gap: 12px;
+   margin-bottom: 24px;
+}
+
+.history {
+   overflow: hidden;
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   background: var(--color-surface);
+}
+
+.historyHead {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding: 14px 16px;
+   border-bottom: 1px solid var(--color-border);
+}
+
+.historyHead h2 {
+   margin: 0;
+   color: var(--color-text);
+   font-size: 0.95rem;
+   font-weight: 650;
+}
+
+.historyHead > span {
+   color: var(--color-text-muted);
+   font-size: 0.78rem;
+}
+
+.campaignName {
+   overflow: hidden;
+   color: var(--color-text);
+   font-weight: 600;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.amount {
+   color: var(--color-text);
+   font-variant-numeric: tabular-nums;
+   font-weight: 600;
+}
+
+.status {
+   display: inline-flex;
+   align-items: center;
+   min-height: 24px;
+   padding: 2px 8px;
+   border-radius: 999px;
+   background: var(--color-background);
+   color: var(--color-text-secondary);
+   font-size: 0.7rem;
+   font-weight: 700;
+   text-transform: capitalize;
+}
+
+.completed {
+   background: rgba(22, 163, 74, 0.12);
+   color: #15803d;
+}
+
+.pending {
+   background: rgba(217, 119, 6, 0.12);
+   color: #a16207;
+}
+
+.failed,
+.refunded {
+   background: rgba(220, 38, 38, 0.1);
+   color: #b91c1c;
+}
+
+.message {
+   margin: 0;
+   padding: 24px 16px;
+   color: var(--color-text-secondary);
+   font-size: 0.85rem;
+}
+
+.notice,
+.error {
+   margin: 0 0 16px;
+   padding: 10px 12px;
+   border: 1px solid var(--color-border);
+   border-radius: 7px;
+   background: var(--color-surface);
+   color: var(--color-text-secondary);
+   font-size: 0.82rem;
+}
+
+.error {
+   border-color: rgba(220, 38, 38, 0.3);
+   color: #b91c1c;
+}
+
+.discoverLink {
+   color: #c2410c;
+   font-size: 0.82rem;
+   font-weight: 650;
+   text-decoration: none;
+}
+
+.discoverLink:hover {
+   text-decoration: underline;
+}
+
+@media (max-width: 680px) {
+   .stats {
+      grid-template-columns: 1fr;
+   }
+}

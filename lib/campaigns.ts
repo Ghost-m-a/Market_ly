@@ -30,7 +30,7 @@ export type CampaignSummary = {
    brandName: string;
    brandLogo: string | null;
    coverImage: string | null;
-   status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED";
+   status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED" | "ARCHIVED";
    budgetCents: number;
    spentCents: number;
    platforms: Platform[];
@@ -47,6 +47,8 @@ export type CampaignDetail = CampaignSummary & {
    referenceUrl: string | null;
    minPayoutCents: number;
    maxPayoutCents: number;
+   minimumContribution: number;
+   contributionTotal: number;
    isMember: boolean;
    isOwner: boolean;
    topClippers: {

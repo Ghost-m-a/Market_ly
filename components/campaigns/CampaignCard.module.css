@@ -170,6 +170,22 @@
    transition: width 0.4s ease;
 }
 
+.contributeBtn {
+   align-self: flex-start;
+   padding: 7px 11px;
+   border: 1px solid rgba(249, 115, 22, 0.35);
+   border-radius: 7px;
+   background: rgba(249, 115, 22, 0.08);
+   color: #c2410c;
+   font-size: 0.76rem;
+   font-weight: 700;
+   cursor: pointer;
+}
+
+.contributeBtn:hover {
+   background: rgba(249, 115, 22, 0.14);
+}
+
 .skeleton {
    pointer-events: none;
    animation: pulse 1.4s ease-in-out infinite;

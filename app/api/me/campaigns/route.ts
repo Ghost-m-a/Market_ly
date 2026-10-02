@@ -11,7 +11,7 @@ export async function GET() {
 
    const [created, joined] = await Promise.all([
       prisma.campaign.findMany({
-         where: { creatorId: userId },
+         where: { creatorId: userId, status: { not: "ARCHIVED" } },
          orderBy: { createdAt: "desc" },
          include: {
             _count: { select: { members: true, submissions: true } },
@@ -19,7 +19,11 @@ export async function GET() {
          },
       }),
       prisma.campaign.findMany({
-         where: { members: { some: { userId } }, creatorId: { not: userId } },
+         where: {
+            members: { some: { userId } },
+            creatorId: { not: userId },
+            status: { not: "ARCHIVED" },
+         },
          orderBy: { createdAt: "desc" },
          include: {
             _count: { select: { members: true, submissions: true } },

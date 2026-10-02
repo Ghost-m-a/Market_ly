@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Modal from "@/components/ui/Modal";
 import { Field, TextArea } from "@/components/ui/Field";
 import { PrimaryBtn, GhostBtn } from "@/components/ui/Page";
 import {
    PLATFORM_LABELS,
+   type CampaignDetail,
    type CampaignSummary,
    type Platform,
 } from "@/lib/campaigns";
@@ -23,20 +24,27 @@ export default function CreateCampaignModal({
    open,
    onClose,
    onCreated,
+   campaign = null,
+   onUpdated,
 }: {
    open: boolean;
    onClose: () => void;
    onCreated: (c: CampaignSummary) => void;
+   campaign?: CampaignDetail | null;
+   onUpdated?: (c: CampaignSummary) => void;
 }) {
    const [title, setTitle] = useState("");
    const [brandName, setBrandName] = useState("");
+   const [brandLogo, setBrandLogo] = useState("");
    const [coverImage, setCoverImage] = useState("");
    const [description, setDescription] = useState("");
    const [budgetDollars, setBudgetDollars] = useState("");
+   const [minimumContribution, setMinimumContribution] = useState("");
    const [minPayout, setMinPayout] = useState("");
    const [maxPayout, setMaxPayout] = useState("");
    const [requirements, setRequirements] = useState("");
    const [referenceUrl, setReferenceUrl] = useState("");
+   const [status, setStatus] = useState<CampaignDetail["status"]>("ACTIVE");
 
    const [platforms, setPlatforms] = useState<Platform[]>(["tiktok"]);
    const [rates, setRates] = useState<Record<Platform, string>>({
@@ -49,6 +57,55 @@ export default function CreateCampaignModal({
 
    const [error, setError] = useState("");
    const [saving, setSaving] = useState(false);
+
+   useEffect(() => {
+      if (!open) return;
+      setError("");
+      if (!campaign) {
+         setTitle("");
+         setBrandName("");
+         setBrandLogo("");
+         setCoverImage("");
+         setDescription("");
+         setBudgetDollars("");
+         setMinimumContribution("");
+         setMinPayout("");
+         setMaxPayout("");
+         setRequirements("");
+         setReferenceUrl("");
+         setStatus("ACTIVE");
+         setPlatforms(["tiktok"]);
+         setRates({
+            tiktok: "1",
+            x: "",
+            instagram: "",
+            youtube: "",
+            facebook: "",
+         });
+         return;
+      }
+
+      setTitle(campaign.title);
+      setBrandName(campaign.brandName);
+      setBrandLogo(campaign.brandLogo ?? "");
+      setCoverImage(campaign.coverImage ?? "");
+      setDescription(campaign.description ?? "");
+      setBudgetDollars((campaign.budgetCents / 100).toFixed(2));
+      setMinimumContribution(Number(campaign.minimumContribution).toFixed(2));
+      setMinPayout((campaign.minPayoutCents / 100).toFixed(2));
+      setMaxPayout((campaign.maxPayoutCents / 100).toFixed(2));
+      setRequirements(campaign.requirements ?? "");
+      setReferenceUrl(campaign.referenceUrl ?? "");
+      setStatus(campaign.status);
+      setPlatforms(campaign.platforms);
+      setRates({
+         tiktok: (campaign.rates.tiktok / 100).toFixed(2),
+         x: (campaign.rates.x / 100).toFixed(2),
+         instagram: (campaign.rates.instagram / 100).toFixed(2),
+         youtube: (campaign.rates.youtube / 100).toFixed(2),
+         facebook: (campaign.rates.facebook / 100).toFixed(2),
+      });
+   }, [open, campaign]);
 
    const togglePlatform = (p: Platform) => {
       setPlatforms((cur) =>
@@ -78,48 +135,42 @@ export default function CreateCampaignModal({
 
       setSaving(true);
       try {
-         const res = await fetch("/api/campaigns", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-               title: title.trim(),
-               brandName: brandName.trim(),
-               coverImage: coverImage.trim() || null,
-               description: description.trim() || null,
-               budgetCents,
-               rates: ratePayload,
-               platforms,
-               minPayoutCents: Math.round(parseFloat(minPayout || "0") * 100),
-               maxPayoutCents: Math.round(parseFloat(maxPayout || "0") * 100),
-               requirements: requirements.trim() || null,
-               referenceUrl: referenceUrl.trim() || null,
-            }),
-         });
+         const res = await fetch(
+            campaign ? `/api/campaigns/${campaign.id}` : "/api/campaigns",
+            {
+               method: campaign ? "PATCH" : "POST",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({
+                  title: title.trim(),
+                  brandName: brandName.trim(),
+                  brandLogo: brandLogo.trim() || null,
+                  coverImage: coverImage.trim() || null,
+                  description: description.trim() || null,
+                  budgetCents,
+                  minimumContribution: Number(minimumContribution || "0"),
+                  rates: ratePayload,
+                  platforms,
+                  minPayoutCents: Math.round(
+                     parseFloat(minPayout || "0") * 100,
+                  ),
+                  maxPayoutCents: Math.round(
+                     parseFloat(maxPayout || "0") * 100,
+                  ),
+                  requirements: requirements.trim() || null,
+                  referenceUrl: referenceUrl.trim() || null,
+                  status,
+               }),
+            },
+         );
 
          const data = await res.json();
          if (!res.ok)
-            throw new Error(data.message ?? "Could not create campaign.");
+            throw new Error(data.message ?? "Could not save campaign.");
 
-         onCreated(data.campaign);
+         if (campaign) onUpdated?.(data.campaign);
+         else onCreated(data.campaign);
 
-         // reset
-         setTitle("");
-         setBrandName("");
-         setCoverImage("");
-         setDescription("");
-         setBudgetDollars("");
-         setMinPayout("");
-         setMaxPayout("");
-         setRequirements("");
-         setReferenceUrl("");
-         setPlatforms(["tiktok"]);
-         setRates({
-            tiktok: "1",
-            x: "",
-            instagram: "",
-            youtube: "",
-            facebook: "",
-         });
+         onClose();
       } catch (err) {
          setError(err instanceof Error ? err.message : "Something went wrong.");
       } finally {
@@ -131,7 +182,7 @@ export default function CreateCampaignModal({
       <Modal
          open={open}
          onClose={onClose}
-         title="Create campaign"
+         title={campaign ? "Edit campaign" : "Create campaign"}
          footer={
             <>
                <GhostBtn onClick={onClose}>Cancel</GhostBtn>
@@ -143,7 +194,11 @@ export default function CreateCampaignModal({
                      form?.requestSubmit();
                   }}
                >
-                  {saving ? "Creating…" : "Create campaign"}
+                  {saving
+                     ? "Saving…"
+                     : campaign
+                       ? "Save changes"
+                       : "Create campaign"}
                </PrimaryBtn>
             </>
          }
@@ -162,6 +217,12 @@ export default function CreateCampaignModal({
                onChange={setBrandName}
                placeholder="Your company"
                required
+            />
+            <Field
+               label="Brand logo URL"
+               value={brandLogo}
+               onChange={setBrandLogo}
+               placeholder="https://…"
             />
             <Field
                label="Cover image URL"
@@ -202,6 +263,33 @@ export default function CreateCampaignModal({
                   placeholder="100"
                />
             </div>
+
+            <Field
+               label="Minimum contribution (USD)"
+               value={minimumContribution}
+               onChange={setMinimumContribution}
+               type="number"
+               placeholder="1.00"
+            />
+
+            {campaign && (
+               <label className={styles.statusField}>
+                  <span>Campaign status</span>
+                  <select
+                     value={status}
+                     onChange={(event) =>
+                        setStatus(
+                           event.target.value as CampaignDetail["status"],
+                        )
+                     }
+                  >
+                     <option value="DRAFT">Draft</option>
+                     <option value="ACTIVE">Active</option>
+                     <option value="PAUSED">Paused</option>
+                     <option value="COMPLETED">Completed</option>
+                  </select>
+               </label>
+            )}
 
             <div className={styles.platforms}>
                <span className={styles.platformsLabel}>Platforms</span>

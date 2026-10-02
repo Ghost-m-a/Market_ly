@@ -354,7 +354,9 @@
    position: absolute;
    top: calc(100% + 8px);
    right: 0;
-   width: 300px;
+   width: min(360px, calc(100vw - 24px));
+   max-height: min(480px, calc(100vh - 80px));
+   overflow: hidden;
    padding: 6px;
    background: var(--color-surface);
    border: 1px solid var(--color-border);
@@ -365,6 +367,9 @@
 }
 
 .notifHead {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
    padding: 10px 12px;
    border-bottom: 1px solid var(--color-border);
    font-size: 0.85rem;
@@ -373,11 +378,29 @@
    margin-bottom: 4px;
 }
 
+.notifHead span {
+   color: var(--color-text-muted);
+   font-size: 0.7rem;
+   font-weight: 500;
+}
+
+.notifList {
+   max-height: min(400px, calc(100vh - 150px));
+   overflow-y: auto;
+}
+
 .notifItem {
+   width: 100%;
    display: flex;
+   align-items: flex-start;
    gap: 0.6rem;
    padding: 10px 12px;
+   border: 0;
    border-radius: 8px;
+   background: transparent;
+   color: inherit;
+   text-align: left;
+   cursor: pointer;
    transition: background 0.12s;
 }
 
@@ -394,17 +417,42 @@
    flex-shrink: 0;
 }
 
+.notifItemRead .notifDot {
+   visibility: hidden;
+}
+
+.notifCopy {
+   display: flex;
+   min-width: 0;
+   flex-direction: column;
+   gap: 3px;
+}
+
 .notifTitle {
-   margin: 0 0 0.1rem;
    font-size: 0.82rem;
    font-weight: 500;
    color: var(--color-text);
 }
 
+.notifMessage {
+   overflow: hidden;
+   color: var(--color-text-secondary);
+   font-size: 0.76rem;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
 .notifTime {
-   margin: 0;
    font-size: 0.72rem;
    color: var(--color-text-muted);
+}
+
+.notifEmpty {
+   margin: 0;
+   padding: 18px 12px;
+   color: var(--color-text-muted);
+   font-size: 0.8rem;
+   text-align: center;
 }
 
 @media (max-width: 860px) {

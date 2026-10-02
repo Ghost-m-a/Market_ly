@@ -15,25 +15,46 @@ export default function CampaignDetailModal({
    campaignId,
    onClose,
    onJoined,
+   startWithContribution = false,
+   onEdit,
+   onDeleted,
 }: {
    campaignId: string | null;
    onClose: () => void;
    onJoined?: () => void;
+   startWithContribution?: boolean;
+   onEdit?: (campaign: CampaignDetail) => void;
+   onDeleted?: (campaignId: string) => void;
 }) {
    const { user } = useAuth();
    const [data, setData] = useState<CampaignDetail | null>(null);
    const [loading, setLoading] = useState(false);
    const [joining, setJoining] = useState(false);
+   const [deleting, setDeleting] = useState(false);
+   const [actionError, setActionError] = useState("");
+   const [showContribution, setShowContribution] = useState(false);
+   const [contributionAmount, setContributionAmount] = useState("1.00");
+   const [contributionError, setContributionError] = useState("");
+   const [contributing, setContributing] = useState(false);
 
    useEffect(() => {
       if (!campaignId) return;
       setLoading(true);
       setData(null);
+      setShowContribution(startWithContribution);
       fetch(`/api/campaigns/${campaignId}`)
          .then((r) => r.json())
-         .then((d) => setData(d.campaign ?? null))
+         .then((d) => {
+            const campaign = d.campaign ?? null;
+            setData(campaign);
+            if (campaign) {
+               setContributionAmount(
+                  Math.max(1, Number(campaign.minimumContribution)).toFixed(2),
+               );
+            }
+         })
          .finally(() => setLoading(false));
-   }, [campaignId]);
+   }, [campaignId, startWithContribution]);
 
    useEffect(() => {
       if (!campaignId) return;
@@ -59,6 +80,63 @@ export default function CampaignDetailModal({
          onJoined?.();
       } finally {
          setJoining(false);
+      }
+   };
+
+   const removeCampaign = async () => {
+      if (!campaignId || !window.confirm("Remove this campaign permanently?"))
+         return;
+      setDeleting(true);
+      setActionError("");
+      try {
+         const response = await fetch(`/api/campaigns/${campaignId}`, {
+            method: "DELETE",
+         });
+         const result = await response.json();
+         if (!response.ok)
+            throw new Error(result.message ?? "Could not remove campaign.");
+         onDeleted?.(campaignId);
+      } catch (error) {
+         setActionError(
+            error instanceof Error
+               ? error.message
+               : "Could not remove campaign.",
+         );
+      } finally {
+         setDeleting(false);
+      }
+   };
+
+   const contribute = async () => {
+      if (!campaignId) return;
+      if (!user) {
+         setContributionError("Sign in to contribute to a campaign.");
+         return;
+      }
+
+      setContributing(true);
+      setContributionError("");
+      try {
+         const response = await fetch(
+            `/api/campaigns/${campaignId}/contributions`,
+            {
+               method: "POST",
+               headers: { "Content-Type": "application/json" },
+               body: JSON.stringify({ amount: contributionAmount }),
+            },
+         );
+         const result = await response.json();
+         if (!response.ok)
+            throw new Error(result.message ?? "Could not start checkout.");
+         window.location.assign(result.checkoutUrl);
+      } catch (error) {
+         setContributionError(
+            error instanceof Error
+               ? error.message
+               : "Could not start checkout.",
+         );
+      } finally {
+         setContributing(false);
       }
    };
 
@@ -163,22 +241,100 @@ export default function CampaignDetailModal({
 
                      <div className={styles.statusRight}>
                         {data.isOwner ? (
-                           <span className={styles.ownerBadge}>
-                              Your campaign
-                           </span>
-                        ) : data.isMember ? (
-                           <span className={styles.joinedBadge}>Joined ✓</span>
+                           <div className={styles.ownerActions}>
+                              <span className={styles.ownerBadge}>
+                                 Your campaign
+                              </span>
+                              {onEdit && (
+                                 <button
+                                    className={styles.joinBtn}
+                                    onClick={() => onEdit(data)}
+                                 >
+                                    Edit
+                                 </button>
+                              )}
+                              {onDeleted && (
+                                 <button
+                                    className={styles.deleteBtn}
+                                    onClick={removeCampaign}
+                                    disabled={deleting}
+                                 >
+                                    {deleting ? "Removing…" : "Remove"}
+                                 </button>
+                              )}
+                           </div>
                         ) : (
-                           <button
-                              className={styles.joinBtn}
-                              onClick={join}
-                              disabled={joining}
-                           >
-                              {joining ? "Joining…" : "Join Campaign"}
-                           </button>
+                           <div className={styles.creatorActions}>
+                              {data.isMember ? (
+                                 <span className={styles.joinedBadge}>
+                                    Joined
+                                 </span>
+                              ) : (
+                                 <button
+                                    className={styles.joinBtn}
+                                    onClick={join}
+                                    disabled={joining}
+                                 >
+                                    {joining ? "Joining…" : "Join Campaign"}
+                                 </button>
+                              )}
+                              <button
+                                 className={styles.contributeAction}
+                                 onClick={() =>
+                                    setShowContribution((visible) => !visible)
+                                 }
+                              >
+                                 Contribute
+                              </button>
+                           </div>
                         )}
                      </div>
                   </div>
+                  {actionError && (
+                     <p className={styles.actionError} role="alert">
+                        {actionError}
+                     </p>
+                  )}
+
+                  {showContribution && !data.isOwner && (
+                     <section className={styles.contributionBox}>
+                        <label htmlFor="contribution-amount">
+                           Contribution amount (USD)
+                        </label>
+                        <div className={styles.contributionControls}>
+                           <input
+                              id="contribution-amount"
+                              type="number"
+                              min={Math.max(1, data.minimumContribution)}
+                              step="0.01"
+                              value={contributionAmount}
+                              onChange={(event) =>
+                                 setContributionAmount(event.target.value)
+                              }
+                           />
+                           <button
+                              className={styles.joinBtn}
+                              onClick={contribute}
+                              disabled={contributing}
+                           >
+                              {contributing
+                                 ? "Opening checkout…"
+                                 : "Continue to checkout"}
+                           </button>
+                        </div>
+                        <p>
+                           Minimum $
+                           {Math.max(1, data.minimumContribution).toFixed(2)}
+                           {data.contributionTotal > 0 &&
+                              ` · $${data.contributionTotal.toFixed(2)} contributed so far`}
+                        </p>
+                        {contributionError && (
+                           <p className={styles.contributionError} role="alert">
+                              {contributionError}
+                           </p>
+                        )}
+                     </section>
+                  )}
 
                   {/* ============ Rates grid ============ */}
                   <section className={styles.section}>

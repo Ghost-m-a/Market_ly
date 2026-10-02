@@ -28,7 +28,7 @@ export type CampaignSummary = {
    brandName: string;
    brandLogo: string | null;
    coverImage: string | null;
-   status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED";
+   status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED" | "ARCHIVED";
    budgetCents: number;
    spentCents: number;
    platforms: Platform[];

@@ -11,7 +11,7 @@ import {
 } from "@/components/campaigns/CampaignCard";
 import CampaignDetailModal from "@/components/campaigns/CampaignDetailModal";
 import CreateCampaignModal from "@/components/campaigns/CreateCampaignModal";
-import type { CampaignSummary } from "@/lib/campaigns";
+import type { CampaignDetail, CampaignSummary } from "@/lib/campaigns";
 import styles from "./dashboard.module.css";
 
 export default function DashboardPage() {
@@ -21,6 +21,7 @@ export default function DashboardPage() {
    const [loading, setLoading] = useState(true);
    const [createOpen, setCreateOpen] = useState(false);
    const [openId, setOpenId] = useState<string | null>(null);
+   const [editing, setEditing] = useState<CampaignDetail | null>(null);
 
    const load = () => {
       if (!user) return;
@@ -125,11 +126,24 @@ export default function DashboardPage() {
          </section>
 
          <CreateCampaignModal
-            open={createOpen}
-            onClose={() => setCreateOpen(false)}
+            open={createOpen || !!editing}
+            campaign={editing}
+            onClose={() => {
+               setCreateOpen(false);
+               setEditing(null);
+            }}
             onCreated={(c) => {
                setCreated((prev) => [c, ...prev]);
                setCreateOpen(false);
+            }}
+            onUpdated={(campaign) => {
+               setCreated((current) =>
+                  current.map((item) =>
+                     item.id === campaign.id ? campaign : item,
+                  ),
+               );
+               setEditing(null);
+               load();
             }}
          />
 
@@ -137,6 +151,16 @@ export default function DashboardPage() {
             campaignId={openId}
             onClose={() => setOpenId(null)}
             onJoined={load}
+            onEdit={(campaign) => {
+               setOpenId(null);
+               setEditing(campaign);
+            }}
+            onDeleted={(campaignId) => {
+               setCreated((current) =>
+                  current.filter((item) => item.id !== campaignId),
+               );
+               setOpenId(null);
+            }}
          />
       </div>
    );

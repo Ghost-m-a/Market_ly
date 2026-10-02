@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { toSummary } from "@/lib/campaigns-server"; // ← changed
@@ -29,6 +30,11 @@ export async function GET(
    });
 
    if (!c) return NextResponse.json({ message: "Not found" }, { status: 404 });
+
+   const contributionAggregate = await prisma.campaignContributor.aggregate({
+      where: { campaignId: id },
+      _sum: { contribution: true },
+   });
 
    // Aggregate top clippers from submissions
    const byUser = new Map<
@@ -77,6 +83,10 @@ export async function GET(
          referenceUrl: c.referenceUrl,
          minPayoutCents: c.minPayoutCents,
          maxPayoutCents: c.maxPayoutCents,
+         minimumContribution: Number(c.minimumContribution),
+         contributionTotal: Number(
+            contributionAggregate._sum.contribution ?? 0,
+         ),
          isOwner: session?.user?.id === c.creatorId,
          isMember:
             Array.isArray((c as any).members) && (c as any).members.length > 0,
@@ -106,14 +116,123 @@ export async function PATCH(
    }
 
    const body = await req.json();
+   const data: Prisma.CampaignUpdateInput = {};
+
+   if (typeof body.title === "string") data.title = body.title.trim();
+   if (typeof body.brandName === "string")
+      data.brandName = body.brandName.trim();
+   if ("brandLogo" in body)
+      data.brandLogo =
+         typeof body.brandLogo === "string"
+            ? body.brandLogo.trim() || null
+            : null;
+   if ("coverImage" in body)
+      data.coverImage =
+         typeof body.coverImage === "string"
+            ? body.coverImage.trim() || null
+            : null;
+   if ("description" in body)
+      data.description =
+         typeof body.description === "string"
+            ? body.description.trim() || null
+            : null;
+   if ("requirements" in body)
+      data.requirements =
+         typeof body.requirements === "string"
+            ? body.requirements.trim() || null
+            : null;
+   if ("referenceUrl" in body)
+      data.referenceUrl =
+         typeof body.referenceUrl === "string"
+            ? body.referenceUrl.trim() || null
+            : null;
+
+   if (body.budgetCents !== undefined) {
+      const budgetCents = Number(body.budgetCents);
+      if (!Number.isInteger(budgetCents) || budgetCents <= 0) {
+         return NextResponse.json(
+            { message: "Budget must be greater than zero." },
+            { status: 400 },
+         );
+      }
+      data.budgetCents = budgetCents;
+   }
+
+   if (Array.isArray(body.platforms)) {
+      const platforms = body.platforms.filter(
+         (platform: unknown) => typeof platform === "string",
+      );
+      if (platforms.length === 0) {
+         return NextResponse.json(
+            { message: "Choose at least one platform." },
+            { status: 400 },
+         );
+      }
+      data.platforms = platforms;
+   }
+
+   if (body.rates && typeof body.rates === "object") {
+      const rateFields = {
+         tiktok: "rateTiktokCents",
+         x: "rateXCents",
+         instagram: "rateInstagramCents",
+         youtube: "rateYoutubeCents",
+         facebook: "rateFacebookCents",
+      } as const;
+      for (const [platform, field] of Object.entries(rateFields)) {
+         if (body.rates[platform] !== undefined) {
+            const rate = Number(body.rates[platform]);
+            if (!Number.isInteger(rate) || rate < 0) {
+               return NextResponse.json(
+                  { message: "Rates must be zero or greater." },
+                  { status: 400 },
+               );
+            }
+            data[field] = rate;
+         }
+      }
+   }
+
+   if (body.minPayoutCents !== undefined)
+      data.minPayoutCents = Math.max(
+         0,
+         Math.round(Number(body.minPayoutCents)),
+      );
+   if (body.maxPayoutCents !== undefined)
+      data.maxPayoutCents = Math.max(
+         0,
+         Math.round(Number(body.maxPayoutCents)),
+      );
+   if (body.minimumContribution !== undefined) {
+      const minimumContribution = Number(body.minimumContribution);
+      if (!Number.isFinite(minimumContribution) || minimumContribution < 0) {
+         return NextResponse.json(
+            { message: "Minimum contribution must be zero or greater." },
+            { status: 400 },
+         );
+      }
+      data.minimumContribution = minimumContribution;
+   }
+   if (typeof body.status === "string") {
+      const statuses = [
+         "DRAFT",
+         "ACTIVE",
+         "PAUSED",
+         "COMPLETED",
+         "ARCHIVED",
+      ] as const;
+      if (!statuses.includes(body.status)) {
+         return NextResponse.json(
+            { message: "Invalid campaign status." },
+            { status: 400 },
+         );
+      }
+      data.status = body.status;
+   }
+
    const updated = await prisma.campaign.update({
       where: { id },
-      data: {
-         title: body.title,
-         description: body.description,
-         status: body.status,
-         budgetCents: body.budgetCents,
-      },
+      data,
       include: {
          _count: { select: { members: true, submissions: true } },
          submissions: { select: { views: true } },
@@ -134,7 +253,10 @@ export async function DELETE(
 
    const existing = await prisma.campaign.findUnique({
       where: { id },
-      select: { creatorId: true },
+      select: {
+         creatorId: true,
+         _count: { select: { transactions: true, contributors: true } },
+      },
    });
    if (!existing)
       return NextResponse.json({ message: "Not found" }, { status: 404 });
@@ -142,6 +264,14 @@ export async function DELETE(
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
    }
 
+   if (existing._count.transactions > 0 || existing._count.contributors > 0) {
+      await prisma.campaign.update({
+         where: { id },
+         data: { status: "ARCHIVED" },
+      });
+      return NextResponse.json({ ok: true, archived: true });
+   }
+
    await prisma.campaign.delete({ where: { id } });
-   return NextResponse.json({ ok: true });
+   return NextResponse.json({ ok: true, archived: false });
 }

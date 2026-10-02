@@ -4,6 +4,26 @@
    gap: 10px;
 }
 
+.statusField {
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   margin-bottom: 16px;
+   color: var(--color-text-secondary);
+   font-size: 0.78rem;
+   font-weight: 600;
+}
+
+.statusField select {
+   min-height: 40px;
+   padding: 0 10px;
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   background: var(--color-surface);
+   color: var(--color-text);
+   font: inherit;
+}
+
 .platforms {
    margin-bottom: 0.9rem;
 }

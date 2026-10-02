@@ -13,6 +13,7 @@ export default function DiscoverPage() {
    const [campaigns, setCampaigns] = useState<CampaignSummary[]>([]);
    const [loading, setLoading] = useState(true);
    const [openId, setOpenId] = useState<string | null>(null);
+   const [contributeId, setContributeId] = useState<string | null>(null);
 
    useEffect(() => {
       fetch("/api/campaigns?status=ACTIVE")
@@ -82,7 +83,14 @@ export default function DiscoverPage() {
                   <CampaignCard
                      key={c.id}
                      campaign={c}
-                     onClick={() => setOpenId(c.id)}
+                     onClick={() => {
+                        setContributeId(null);
+                        setOpenId(c.id);
+                     }}
+                     onContribute={() => {
+                        setContributeId(c.id);
+                        setOpenId(c.id);
+                     }}
                   />
                ))}
             </div>
@@ -90,7 +98,11 @@ export default function DiscoverPage() {
 
          <CampaignDetailModal
             campaignId={openId}
-            onClose={() => setOpenId(null)}
+            startWithContribution={!!openId && contributeId === openId}
+            onClose={() => {
+               setOpenId(null);
+               setContributeId(null);
+            }}
             onJoined={() => {
                // refresh list is optional
             }}

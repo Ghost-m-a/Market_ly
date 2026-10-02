@@ -26,7 +26,11 @@ model User {
    members     CampaignMember[]
    submissions Submission[]
    conversationMemberships ConversationMember[]
-   sentMessages            Message[]
+   sentMessages            Message[]                 @relation("SentMessages")
+   receivedMessages        Message[]                 @relation("ReceivedMessages")
+   notifications           Notification[]
+   transactions            Transaction[]
+   contributions           CampaignContributor[]
 
 }
 
@@ -75,6 +79,7 @@ enum CampaignStatus {
    ACTIVE
    PAUSED
    COMPLETED
+   ARCHIVED
 }
 
 model Campaign {
@@ -88,11 +93,16 @@ model Campaign {
    brandName   String
    brandLogo   String?
    coverImage  String?
+   imageUrl    String?
    description String? @db.Text
+   category    String  @default("content")
+   targetAudience String @default("")
 
    // Money — all in cents to avoid float issues
    budgetCents Int @default(0)
    spentCents  Int @default(0)
+   budget      Decimal @default(0) @db.Decimal(10, 2)
+   minimumContribution Decimal @default(0) @db.Decimal(10, 2)
 
    // Payout per 1,000 views (in cents)
    rateTiktokCents    Int @default(0)
@@ -119,6 +129,8 @@ model Campaign {
 
    submissions Submission[]
    members     CampaignMember[]
+   contributors CampaignContributor[]
+   transactions Transaction[]
 
    @@index([status])
    @@index([creatorId])
@@ -198,11 +210,68 @@ model Message {
    id             String   @id @default(cuid())
    conversationId String
    senderId       String
+   recipientId    String?
    body           String   @db.Text
+   content        String   @default("") @db.Text
+   messageType    String   @default("private")
+   read           Boolean  @default(false)
    createdAt      DateTime @default(now())
+   updatedAt      DateTime @default(now()) @updatedAt
 
    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-   sender       User         @relation(fields: [senderId], references: [id], onDelete: Cascade)
+   sender       User         @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+   recipient    User?        @relation("ReceivedMessages", fields: [recipientId], references: [id])
 
    @@index([conversationId, createdAt])
+   @@index([senderId, createdAt])
+   @@index([recipientId, createdAt])
+}
+
+model Notification {
+   id        String   @id @default(cuid())
+   userId    String
+   title     String
+   message   String
+   type      String
+   read      Boolean  @default(false)
+   link      String?
+   createdAt DateTime @default(now())
+
+   user User @relation(fields: [userId], references: [id])
+
+   @@index([userId, createdAt])
+}
+
+model Transaction {
+   id          String   @id @default(cuid())
+   amount      Decimal  @db.Decimal(10, 2)
+   currency    String   @default("USD")
+   status      String
+   paymentId   String?
+   providerRef String?
+   userId      String
+   amountPaid  Decimal  @default(0) @db.Decimal(10, 2)
+   campaignId  String?
+   createdAt   DateTime @default(now())
+   updatedAt   DateTime @updatedAt
+
+   user User @relation(fields: [userId], references: [id])
+   campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+   @@index([userId, status])
+   @@index([createdAt])
+}
+
+model CampaignContributor {
+   id           String   @id @default(cuid())
+   userId       String
+   campaignId   String
+   contribution Decimal  @db.Decimal(10, 2)
+   createdAt    DateTime @default(now())
+
+   user     User     @relation(fields: [userId], references: [id])
+   campaign Campaign @relation(fields: [campaignId], references: [id])
+
+   @@unique([campaignId, userId])
+   @@index([campaignId])
 }

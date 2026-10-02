@@ -27,6 +27,7 @@ export async function POST(req: Request) {
          coverImage,
          description,
          budgetCents,
+         minimumContribution,
          rates,
          platforms,
          minPayoutCents,
@@ -45,6 +46,17 @@ export async function POST(req: Request) {
          );
       }
 
+      const minimumContributionAmount = Number(minimumContribution ?? 0);
+      if (
+         !Number.isFinite(minimumContributionAmount) ||
+         minimumContributionAmount < 0
+      ) {
+         return NextResponse.json(
+            { message: "Minimum contribution must be zero or greater." },
+            { status: 400 },
+         );
+      }
+
       const c = await prisma.campaign.create({
          data: {
             creatorId: session.user.id,
@@ -54,6 +66,7 @@ export async function POST(req: Request) {
             coverImage: coverImage || null,
             description: description || null,
             budgetCents: Number(budgetCents),
+            minimumContribution: minimumContributionAmount,
             rateTiktokCents: Number(rates?.tiktok ?? 0),
             rateXCents: Number(rates?.x ?? 0),
             rateInstagramCents: Number(rates?.instagram ?? 0),

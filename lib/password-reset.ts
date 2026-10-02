@@ -1,4 +1,3 @@
-// lib/password-reset.ts
 import { createHash, randomBytes } from "node:crypto";
 import { sendEmail } from "./verify";
 

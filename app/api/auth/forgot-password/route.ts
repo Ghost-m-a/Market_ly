@@ -24,8 +24,11 @@ export async function POST(req: Request) {
          { status: 400 },
       );
    }
+
    if (
-      !process.env.RESEND_API_KEY ||
+      !process.env.SMTP_HOST ||
+      !process.env.SMTP_USER ||
+      !process.env.SMTP_PASS ||
       !process.env.EMAIL_FROM ||
       !process.env.NEXT_PUBLIC_APP_URL
    ) {
@@ -61,24 +64,14 @@ export async function POST(req: Request) {
             process.env.NEXT_PUBLIC_APP_URL,
          );
          resetUrl.searchParams.set("token", token);
+
          try {
             await sendPasswordResetEmail(user.email, resetUrl.toString());
          } catch (error) {
             await prisma.passwordResetToken.deleteMany({
                where: { tokenHash },
             });
-            if (
-               error instanceof Error &&
-               error.message === "EMAIL_NOT_CONFIGURED"
-            ) {
-               return NextResponse.json(
-                  {
-                     message:
-                        "Password reset email is not configured on this server.",
-                  },
-                  { status: 503 },
-               );
-            }
+            console.error("[FORGOT PASSWORD SEND ERROR]", error);
             return NextResponse.json(
                {
                   message:
@@ -90,7 +83,8 @@ export async function POST(req: Request) {
       }
 
       return NextResponse.json({ message: GENERIC_MESSAGE });
-   } catch {
+   } catch (error) {
+      console.error("[FORGOT PASSWORD ERROR]", error);
       return NextResponse.json(
          { message: "Could not process the password reset request." },
          { status: 500 },

@@ -3,7 +3,7 @@
    "version": "0.1.0",
    "private": true,
    "engines": {
-      "node": ">=20.0.0"
+      "node": "20.x"
    },
    "scripts": {
       "dev": "next dev",
@@ -14,8 +14,6 @@
       "admin:create": "tsx prisma/create-admin.ts",
       "prisma:generate": "node scripts/prisma-mongo-cli.mjs generate",
       "db:push": "node scripts/prisma-mongo-cli.mjs db push",
-      "data:copy:dry-run": "node --import tsx prisma/copy-postgres-data-to-mongodb.ts",
-      "data:copy:apply": "node --import tsx prisma/copy-postgres-data-to-mongodb.ts --apply",
       "postinstall": "prisma generate",
       "vercel-build": "prisma generate && next build"
    },
@@ -30,7 +28,7 @@
       "prisma": "6.19.3",
       "react": "^19.0.1",
       "react-dom": "^19.0.1",
-      "sharp": "^0.34.4",
+      "sharp": "^0.34.5",
       "stripe": "^23.0.0"
    },
    "devDependencies": {

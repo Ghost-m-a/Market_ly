@@ -4,6 +4,36 @@
    gap: 10px;
 }
 
+.creditQuote {
+   display: grid;
+   gap: 7px;
+   padding: 12px;
+   margin-bottom: 16px;
+   border: 1px solid var(--color-border);
+   border-radius: 6px;
+   background: var(--color-background);
+}
+
+.creditQuote label {
+   color: var(--color-text);
+   font-size: 0.78rem;
+   font-weight: 600;
+}
+
+.creditQuote input {
+   min-height: 38px;
+   padding: 7px 10px;
+}
+
+.creditQuote p {
+   color: var(--color-text-secondary);
+   font-size: 0.78rem;
+}
+
+.creditQuote .creditWarning {
+   color: #b42318;
+}
+
 .statusField {
    display: flex;
    flex-direction: column;

@@ -11,6 +11,7 @@
       "start": "next start",
       "lint": "next lint",
       "seed": "tsx prisma/seed.ts",
+      "admin:create": "tsx prisma/create-admin.ts",
       "postinstall": "prisma7 generate",
       "vercel-build": "prisma7 migrate deploy && prisma7 generate && next build"
    },
@@ -19,6 +20,7 @@
       "@prisma/adapter-pg": "^7.10.0",
       "@prisma/client": "^7.10.0",
       "@prisma/prisma7": "^7.10.0",
+      "mongodb": "^7.7.0",
       "next": "^15.5.26",
       "next-auth": "^5.0.0-beta.25",
       "pg": "^8.23.1",

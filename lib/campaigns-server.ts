@@ -20,6 +20,8 @@ export function toSummary(c: any): CampaignSummary {
       status: c.status,
       budgetCents: c.budgetCents,
       spentCents: c.spentCents,
+      targetViews: c.targetViews,
+      campaignCostCredits: c.campaignCostCredits,
       platforms: c.platforms as Platform[],
       rates: {
          tiktok: c.rateTiktokCents,

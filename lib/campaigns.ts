@@ -33,6 +33,8 @@ export type CampaignSummary = {
    status: "DRAFT" | "ACTIVE" | "PAUSED" | "COMPLETED" | "ARCHIVED";
    budgetCents: number;
    spentCents: number;
+   targetViews: number;
+   campaignCostCredits: number;
    platforms: Platform[];
    rates: Record<Platform, number>;
    memberCount: number;

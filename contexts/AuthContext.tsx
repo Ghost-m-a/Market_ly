@@ -8,13 +8,14 @@ export type AuthUser = {
    name: string;
    email: string;
    avatarUrl?: string; // kept for backward compat with existing components
+   role: "USER" | "ADMIN";
 };
 
 type AuthContextValue = {
    user: AuthUser | null;
    loading: boolean;
    login: (email: string, password: string) => Promise<void>;
-   signup: (name: string, email: string, password: string) => Promise<void>;
+   signup: (name: string, email: string, password: string) => Promise<string>;
    logout: () => Promise<void>;
    refresh: () => Promise<void>;
 };
@@ -34,6 +35,7 @@ function AuthContextInner({ children }: { children: ReactNode }) {
            name: session.user.name ?? "",
            email: session.user.email ?? "",
            avatarUrl: session.user.image ?? undefined, // ← the bridge
+           role: session.user.role,
         }
       : null;
 
@@ -68,18 +70,7 @@ function AuthContextInner({ children }: { children: ReactNode }) {
          if (!res.ok)
             throw new Error(data.message ?? "Could not create account.");
 
-         // 2. Sign them in immediately
-         const signInRes = await signIn("credentials", {
-            email,
-            password,
-            redirect: false,
-         });
-
-         if (!signInRes || signInRes.error) {
-            throw new Error(
-               "Account created, but sign-in failed. Please log in manually.",
-            );
-         }
+         return data.message ?? "Check your email to verify your address.";
       },
       [],
    );

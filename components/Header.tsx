@@ -203,106 +203,122 @@ export default function Header() {
             </button>
 
             <div className={styles.actions}>
-               <Link
-                  href="/dashboard/developer"
-                  className={styles.iconBtn}
-                  aria-label="Developer"
-               >
-                  <IconCode />
-                  <span className={styles.tt}>Developer</span>
-               </Link>
+               {user && (
+                  <>
+                     <Link
+                        href="/dashboard/developer"
+                        className={styles.iconBtn}
+                        aria-label="Developer"
+                     >
+                        <IconCode />
+                        <span className={styles.tt}>Developer</span>
+                     </Link>
 
-               <Link
-                  href="/dashboard/support"
-                  className={styles.iconBtn}
-                  aria-label="Help"
-               >
-                  <IconHelp />
-                  <span className={styles.tt}>Help &amp; Support</span>
-               </Link>
+                     <Link
+                        href="/dashboard/support"
+                        className={styles.iconBtn}
+                        aria-label="Help"
+                     >
+                        <IconHelp />
+                        <span className={styles.tt}>Help &amp; Support</span>
+                     </Link>
 
-               <button
-                  className={styles.iconBtn}
-                  aria-label="What's new"
-                  onClick={() => setSearchOpen(true)}
-               >
-                  <IconSparkle />
-                  <span className={styles.tt}>What&apos;s new</span>
-               </button>
+                     <button
+                        className={styles.iconBtn}
+                        aria-label="What's new"
+                        onClick={() => setSearchOpen(true)}
+                     >
+                        <IconSparkle />
+                        <span className={styles.tt}>What&apos;s new</span>
+                     </button>
 
-               <div className={styles.notifWrap} ref={notifRef}>
-                  <button
-                     className={styles.iconBtn}
-                     aria-label="Notifications"
-                     onClick={() => setNotifOpen((o) => !o)}
-                  >
-                     <IconBell />
-                     {unreadCount > 0 && (
-                        <span className={styles.badge}>
-                           {unreadCount > 9 ? "9+" : unreadCount}
-                        </span>
-                     )}
-                     <span className={styles.tt}>Notifications</span>
-                  </button>
-
-                  {notifOpen && (
-                     <div className={styles.notifMenu}>
-                        <div className={styles.notifHead}>
-                           Notifications
+                     <div className={styles.notifWrap} ref={notifRef}>
+                        <button
+                           className={styles.iconBtn}
+                           aria-label="Notifications"
+                           onClick={() => setNotifOpen((o) => !o)}
+                        >
+                           <IconBell />
                            {unreadCount > 0 && (
-                              <span>{unreadCount} unread</span>
+                              <span className={styles.badge}>
+                                 {unreadCount > 9 ? "9+" : unreadCount}
+                              </span>
                            )}
-                        </div>
-                        {!user ? (
-                           <p className={styles.notifEmpty}>
-                              Sign in to view notifications.
-                           </p>
-                        ) : notifications.length === 0 ? (
-                           <p className={styles.notifEmpty}>
-                              You&apos;re all caught up.
-                           </p>
-                        ) : (
-                           <div className={styles.notifList}>
-                              {notifications.slice(0, 8).map((notification) => (
-                                 <button
-                                    key={notification.id}
-                                    className={`${styles.notifItem} ${notification.read ? styles.notifItemRead : ""}`}
-                                    onClick={() =>
-                                       openNotification(notification)
-                                    }
-                                 >
-                                    {!notification.read && (
-                                       <span className={styles.notifDot} />
-                                    )}
-                                    <span className={styles.notifCopy}>
-                                       <span className={styles.notifTitle}>
-                                          {notification.title}
-                                       </span>
-                                       <span className={styles.notifMessage}>
-                                          {notification.message}
-                                       </span>
-                                       <span className={styles.notifTime}>
-                                          {new Date(
-                                             notification.createdAt,
-                                          ).toLocaleString()}
-                                       </span>
-                                    </span>
-                                 </button>
-                              ))}
+                           <span className={styles.tt}>Notifications</span>
+                        </button>
+
+                        {notifOpen && (
+                           <div className={styles.notifMenu}>
+                              <div className={styles.notifHead}>
+                                 Notifications
+                                 {unreadCount > 0 && (
+                                    <span>{unreadCount} unread</span>
+                                 )}
+                              </div>
+                              {!user ? (
+                                 <p className={styles.notifEmpty}>
+                                    Sign in to view notifications.
+                                 </p>
+                              ) : notifications.length === 0 ? (
+                                 <p className={styles.notifEmpty}>
+                                    You&apos;re all caught up.
+                                 </p>
+                              ) : (
+                                 <div className={styles.notifList}>
+                                    {notifications
+                                       .slice(0, 8)
+                                       .map((notification) => (
+                                          <button
+                                             key={notification.id}
+                                             className={`${styles.notifItem} ${notification.read ? styles.notifItemRead : ""}`}
+                                             onClick={() =>
+                                                openNotification(notification)
+                                             }
+                                          >
+                                             {!notification.read && (
+                                                <span
+                                                   className={styles.notifDot}
+                                                />
+                                             )}
+                                             <span className={styles.notifCopy}>
+                                                <span
+                                                   className={styles.notifTitle}
+                                                >
+                                                   {notification.title}
+                                                </span>
+                                                <span
+                                                   className={
+                                                      styles.notifMessage
+                                                   }
+                                                >
+                                                   {notification.message}
+                                                </span>
+                                                <span
+                                                   className={styles.notifTime}
+                                                >
+                                                   {new Date(
+                                                      notification.createdAt,
+                                                   ).toLocaleString()}
+                                                </span>
+                                             </span>
+                                          </button>
+                                       ))}
+                                 </div>
+                              )}
                            </div>
                         )}
                      </div>
-                  )}
-               </div>
 
-               <Link
-                  href="/dashboard/messages"
-                  className={styles.iconBtn}
-                  aria-label="Messages"
-               >
-                  <IconMessage />
-                  <span className={styles.tt}>Messages</span>
-               </Link>
+                     <Link
+                        href="/dashboard/messages"
+                        className={styles.iconBtn}
+                        aria-label="Messages"
+                     >
+                        <IconMessage />
+                        <span className={styles.tt}>Messages</span>
+                     </Link>
+                  </>
+               )}
 
                {loading ? (
                   <div className={styles.skeleton} />

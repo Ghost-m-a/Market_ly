@@ -87,7 +87,9 @@ export async function GET(
          contributionTotal: Number(
             contributionAggregate._sum.contribution ?? 0,
          ),
-         isOwner: session?.user?.id === c.creatorId,
+         isOwner:
+            session?.user?.id === c.creatorId ||
+            session?.user?.role === "ADMIN",
          isMember:
             Array.isArray((c as any).members) && (c as any).members.length > 0,
          topClippers,
@@ -111,7 +113,10 @@ export async function PATCH(
    });
    if (!existing)
       return NextResponse.json({ message: "Not found" }, { status: 404 });
-   if (existing.creatorId !== session.user.id) {
+   if (
+      existing.creatorId !== session.user.id &&
+      session.user.role !== "ADMIN"
+   ) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
    }
 
@@ -255,12 +260,17 @@ export async function DELETE(
       where: { id },
       select: {
          creatorId: true,
+         title: true,
+         campaignCostCredits: true,
          _count: { select: { transactions: true, contributors: true } },
       },
    });
    if (!existing)
       return NextResponse.json({ message: "Not found" }, { status: 404 });
-   if (existing.creatorId !== session.user.id) {
+   if (
+      existing.creatorId !== session.user.id &&
+      session.user.role !== "ADMIN"
+   ) {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
    }
 
@@ -272,6 +282,27 @@ export async function DELETE(
       return NextResponse.json({ ok: true, archived: true });
    }
 
-   await prisma.campaign.delete({ where: { id } });
-   return NextResponse.json({ ok: true, archived: false });
+   await prisma.$transaction(async (tx) => {
+      await tx.campaign.delete({ where: { id } });
+      if (existing.campaignCostCredits > 0) {
+         await tx.user.update({
+            where: { id: existing.creatorId },
+            data: {
+               creditsBalance: { increment: existing.campaignCostCredits },
+            },
+         });
+         await tx.creditLedger.create({
+            data: {
+               userId: existing.creatorId,
+               amount: existing.campaignCostCredits,
+               description: `Refund for removed campaign: ${existing.title}`,
+            },
+         });
+      }
+   });
+   return NextResponse.json({
+      ok: true,
+      archived: false,
+      refundedCredits: existing.campaignCostCredits,
+   });
 }

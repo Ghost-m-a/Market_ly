@@ -99,6 +99,7 @@
    Workspace switcher
 ================================ */
 .workspaceRow {
+   position: relative;
    display: flex;
    align-items: center;
    gap: 0.4rem;
@@ -207,6 +208,69 @@
 .addBtn:hover {
    background: var(--glass-hover);
    color: var(--color-text);
+}
+
+.workspaceMenu {
+   position: absolute;
+   top: calc(100% - 0.35rem);
+   left: 0;
+   z-index: 40;
+   width: min(260px, calc(100vw - 32px));
+   display: flex;
+   flex-direction: column;
+   gap: 6px;
+   padding: 10px;
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   background: var(--color-surface);
+   box-shadow: var(--shadow-md);
+}
+
+.workspaceMenu > strong {
+   padding: 2px 4px 5px;
+   font-size: 0.78rem;
+}
+
+.workspaceMenuItem,
+.workspaceMenu form button {
+   min-height: 34px;
+   padding: 6px 8px;
+   border: 1px solid var(--color-border);
+   border-radius: 5px;
+   background: var(--color-background);
+   color: var(--color-text);
+   text-align: left;
+   font-size: 0.8rem;
+}
+
+.workspaceMenuItem:hover,
+.workspaceMenu form button:hover {
+   border-color: var(--accent-ring);
+}
+
+.workspaceMenu form {
+   display: grid;
+   gap: 6px;
+   padding-top: 6px;
+   border-top: 1px solid var(--color-border);
+}
+
+.workspaceMenu form input {
+   min-height: 34px;
+   padding: 6px 8px;
+   font-size: 0.8rem;
+}
+
+.workspaceMenu form button {
+   background: var(--accent-1);
+   color: #fff;
+   text-align: center;
+}
+
+.workspaceError {
+   margin: -0.5rem 0 0.75rem;
+   color: #b42318;
+   font-size: 0.72rem;
 }
 
 /* ================================

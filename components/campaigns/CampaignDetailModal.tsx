@@ -417,6 +417,11 @@ export default function CampaignDetailModal({
                            )}{" "}
                            still up for grabs
                         </p>
+                        <p className={styles.budgetHint}>
+                           Target: {formatViews(data.targetViews)} views ·
+                           Launch charge:{" "}
+                           {data.campaignCostCredits.toLocaleString()} credits
+                        </p>
                      </div>
 
                      <div className={styles.panel}>

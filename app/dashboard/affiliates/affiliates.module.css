@@ -1,0 +1,147 @@
+.page {
+   width: 100%;
+}
+
+.form {
+   display: grid;
+   grid-template-columns: minmax(160px, 0.7fr) minmax(220px, 1.3fr) auto;
+   align-items: end;
+   gap: 12px;
+   padding: 16px 0;
+   border-bottom: 1px solid var(--color-border);
+}
+
+.form label {
+   display: grid;
+   gap: 6px;
+   color: var(--color-text-secondary);
+   font-size: 0.8rem;
+   font-weight: 600;
+}
+
+.form input {
+   width: 100%;
+   min-width: 0;
+   min-height: 38px;
+   padding: 7px 10px;
+   font-size: 0.85rem;
+   font-weight: 400;
+}
+
+.form > button,
+.actions button {
+   min-height: 36px;
+   padding: 0 12px;
+   border: 1px solid var(--color-border);
+   border-radius: 5px;
+   background: var(--color-surface);
+   color: var(--color-text);
+   font-size: 0.78rem;
+   font-weight: 600;
+   white-space: nowrap;
+}
+
+.form > button {
+   border-color: var(--color-primary);
+   background: var(--color-primary);
+   color: #fff;
+}
+
+.form > button:disabled {
+   opacity: 0.5;
+}
+
+.section {
+   padding-top: 18px;
+}
+
+.sectionHeader {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   padding-bottom: 12px;
+}
+
+.sectionHeader h2 {
+   font-size: 1rem;
+}
+
+.sectionHeader span {
+   color: var(--color-text-muted);
+   font-size: 0.8rem;
+}
+
+.tableScroll {
+   overflow-x: auto;
+   border: 1px solid var(--color-border);
+   border-radius: 6px;
+   background: var(--color-surface);
+}
+
+.tableScroll table {
+   width: 100%;
+   min-width: 760px;
+   border-collapse: collapse;
+   text-align: left;
+}
+
+.tableScroll th,
+.tableScroll td {
+   max-width: 320px;
+   padding: 11px 12px;
+   border-bottom: 1px solid var(--color-border);
+   font-size: 0.82rem;
+   overflow: hidden;
+   text-overflow: ellipsis;
+   white-space: nowrap;
+}
+
+.tableScroll th {
+   background: var(--color-background);
+   color: var(--color-text-secondary);
+   font-size: 0.74rem;
+}
+
+.tableScroll tr:last-child td {
+   border-bottom: 0;
+}
+
+.tableScroll td a {
+   color: var(--color-primary);
+}
+
+.actions {
+   display: flex;
+   gap: 6px;
+}
+
+.actions button:hover {
+   background: var(--color-background);
+}
+
+.empty {
+   padding: 30px 12px;
+   color: var(--color-text-muted);
+   text-align: center;
+   font-size: 0.88rem;
+}
+
+.error {
+   padding: 9px 12px;
+   margin-top: 12px;
+   border: 1px solid #efb4b0;
+   border-radius: 6px;
+   background: #fff1f0;
+   color: #b42318;
+   font-size: 0.85rem;
+}
+
+@media (max-width: 760px) {
+   .form {
+      grid-template-columns: 1fr;
+   }
+
+   .form > button {
+      justify-self: start;
+   }
+}

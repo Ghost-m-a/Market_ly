@@ -28,7 +28,45 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 For local webhook testing, run `stripe listen --forward-to localhost:3000/api/webhooks/stripe` and use the signing secret printed by the Stripe CLI as `STRIPE_WEBHOOK_SECRET`. In production, register `/api/webhooks/stripe` as a Stripe webhook endpoint and enable `checkout.session.completed`, `checkout.session.async_payment_succeeded`, `checkout.session.async_payment_failed`, and `checkout.session.expired` events.
 
-The contribution and transaction schema migration is in `prisma/migrations/20261002053259_add_messaging_notifications_contributions`. Apply pending migrations with `npx prisma migrate deploy` only after reviewing the target database and migration plan.
+## Password Resets
+
+Password reset emails are sent through Resend. Configure a Resend API key, a verified sender address, and the public base URL in `.env`:
+
+```env
+RESEND_API_KEY=re_...
+EMAIL_FROM="Market_ly <no-reply@your-verified-domain.com>"
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+Apply pending migrations with `npx prisma7 migrate deploy`. Reset links expire after one hour and can only be used once.
+
+## Email Verification and Admin Access
+
+New password-based accounts must verify their email before signing in. The verification link expires after 24 hours. The Resend variables above are also required for signup verification.
+
+Admin privileges are never accepted from public signup. Create an administrator from a trusted server environment by setting `ADMIN_NAME`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` (at least 12 characters), then running:
+
+```sh
+npm run admin:create
+```
+
+This creates the admin account or promotes the matching email and sets its password. Keep these variables out of source control. The admin console is available at `/dashboard/admin` after signing in.
+
+The case-insensitive email index prevents duplicate addresses that differ only by letter casing. If existing production data contains such duplicates, resolve them before applying the migration.
+
+The contribution and transaction schema migration is in `prisma/migrations/20261002053259_add_messaging_notifications_contributions`.
+
+## Workspace and Community Data
+
+Authentication, campaigns, and credits remain in PostgreSQL. Workspace selection, Townhall posts, partner requests, and affiliate links use MongoDB. Configure `MONGODB_URI` and optionally `MONGODB_DATABASE` in `.env`; the MongoDB deployment must be reachable by the app. These features return a configuration error rather than displaying sample records when MongoDB is unavailable.
+
+## Campaign Credits
+
+Apply all pending PostgreSQL migrations with `npx prisma7 migrate deploy`. Admins set the credit rate at `/dashboard/admin`; the launch charge is rounded up from `target views × credits per 1,000 views ÷ 1,000`. Credit debits/refunds and admin grants are recorded in the ledger. Credits are currently granted by admins; there is no credit-purchase flow.
+
+## Google Ads
+
+The admin console reads and pauses/enables live Google Ads campaigns when these server-only variables are configured: `GOOGLE_ADS_DEVELOPER_TOKEN`, `GOOGLE_ADS_CLIENT_ID`, `GOOGLE_ADS_CLIENT_SECRET`, `GOOGLE_ADS_REFRESH_TOKEN`, `GOOGLE_ADS_CUSTOMER_ID`, and `GOOGLE_ADS_API_VERSION`. For manager accounts, optionally set `GOOGLE_ADS_LOGIN_CUSTOMER_ID`. Never expose these credentials to the browser or commit them to source control.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

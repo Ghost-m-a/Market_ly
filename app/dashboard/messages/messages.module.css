@@ -287,6 +287,23 @@
    background: var(--color-surface);
 }
 
+.chatBackBtn {
+   display: none;
+   width: 36px;
+   height: 36px;
+   flex: 0 0 auto;
+   place-items: center;
+   border: 0;
+   border-radius: 6px;
+   background: transparent;
+   color: var(--color-text-secondary);
+}
+
+.chatBackBtn:hover {
+   background: var(--color-background);
+   color: var(--color-text);
+}
+
 .chatAvatar {
    width: 36px;
    height: 36px;
@@ -317,6 +334,14 @@
 .chatStatus {
    font-size: 0.75rem;
    color: #16a34a;
+}
+
+.chatError {
+   padding: 8px 20px;
+   border-bottom: 1px solid var(--color-border);
+   background: #fff1f0;
+   color: #b42318;
+   font-size: 0.8rem;
 }
 
 .chatBody {
@@ -444,7 +469,23 @@
       margin: -1.5rem -1rem -3rem;
    }
 
+   .list {
+      display: flex;
+   }
+
    .chat {
       display: none;
+   }
+
+   .wrapChatOpen .list {
+      display: none;
+   }
+
+   .wrapChatOpen .chat {
+      display: flex;
+   }
+
+   .chatBackBtn {
+      display: grid;
    }
 }

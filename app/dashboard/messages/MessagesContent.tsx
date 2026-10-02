@@ -49,16 +49,18 @@ export default function MessagesContent() {
 
    const [conversations, setConversations] = useState<Conversation[]>([]);
    const [loadingList, setLoadingList] = useState(true);
+   const [listError, setListError] = useState("");
 
    const [messages, setMessages] = useState<Message[]>([]);
    const [chatTitle, setChatTitle] = useState("");
    const [chatAvatar, setChatAvatar] = useState<string | null>(null);
    const [loadingChat, setLoadingChat] = useState(false);
 
-   const [filter, setFilter] = useState<"all" | "unread" | "requests">("all");
+   const [filter, setFilter] = useState<"all" | "unread">("all");
    const [search, setSearch] = useState("");
    const [draft, setDraft] = useState("");
    const [sending, setSending] = useState(false);
+   const [chatError, setChatError] = useState("");
 
    const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -67,7 +69,14 @@ export default function MessagesContent() {
       try {
          const res = await fetch("/api/conversations", { cache: "no-store" });
          const data = await res.json();
+         if (!res.ok)
+            throw new Error(data.message ?? "Could not load conversations.");
          setConversations(data.conversations ?? []);
+         setListError("");
+      } catch {
+         setListError(
+            "Could not refresh conversations. Check your connection.",
+         );
       } finally {
          setLoadingList(false);
       }
@@ -83,29 +92,78 @@ export default function MessagesContent() {
          setMessages([]);
          setChatTitle("");
          setChatAvatar(null);
+         setChatError("");
          return;
       }
-      setLoadingChat(true);
-      fetch(`/api/conversations/${activeId}/messages`, { cache: "no-store" })
-         .then((r) => r.json())
-         .then((d) => {
-            setMessages(d.messages ?? []);
-            setChatTitle(d.title ?? "");
-            setChatAvatar(d.avatarUrl ?? null);
-         })
-         .finally(() => setLoadingChat(false));
 
-      // Mark as read
-      fetch(`/api/conversations/${activeId}/read`, { method: "POST" })
-         .then(() => {
-            setConversations((cur) =>
-               cur.map((c) =>
-                  c.id === activeId ? { ...c, unreadCount: 0 } : c,
-               ),
-            );
-         })
-         .catch(() => {});
-   }, [activeId]);
+      setMessages([]);
+      let cancelled = false;
+      let loading = false;
+      const loadActiveConversation = async () => {
+         if (loading) return;
+         loading = true;
+         try {
+            const res = await fetch(`/api/conversations/${activeId}/messages`, {
+               cache: "no-store",
+            });
+            const data = await res.json();
+            if (!res.ok) {
+               throw new Error(data.message ?? "Could not load messages.");
+            }
+            if (cancelled) return;
+            setMessages((current) => {
+               const merged = new Map(
+                  current.map((message) => [message.id, message]),
+               );
+               for (const message of data.messages ?? []) {
+                  merged.set(message.id, message);
+               }
+               return [...merged.values()].sort(
+                  (a, b) =>
+                     new Date(a.createdAt).getTime() -
+                     new Date(b.createdAt).getTime(),
+               );
+            });
+            setChatTitle(data.title ?? "");
+            setChatAvatar(data.avatarUrl ?? null);
+            setChatError("");
+
+            const readRes = await fetch(`/api/conversations/${activeId}/read`, {
+               method: "POST",
+            });
+            if (readRes.ok && !cancelled) {
+               setConversations((cur) =>
+                  cur.map((c) =>
+                     c.id === activeId ? { ...c, unreadCount: 0 } : c,
+                  ),
+               );
+            }
+         } catch (err) {
+            if (!cancelled) {
+               setChatError(
+                  err instanceof Error
+                     ? err.message
+                     : "Could not load messages.",
+               );
+            }
+         } finally {
+            loading = false;
+            if (!cancelled) setLoadingChat(false);
+         }
+      };
+
+      setLoadingChat(true);
+      void loadActiveConversation();
+      const intervalId = window.setInterval(() => {
+         void loadActiveConversation();
+         void loadConversations();
+      }, 5000);
+
+      return () => {
+         cancelled = true;
+         window.clearInterval(intervalId);
+      };
+   }, [activeId, loadConversations]);
 
    /* ---------- Auto-scroll to newest ---------- */
    useEffect(() => {
@@ -118,6 +176,7 @@ export default function MessagesContent() {
       if (!draft.trim() || !activeId || sending) return;
 
       setSending(true);
+      setChatError("");
       try {
          const res = await fetch(`/api/conversations/${activeId}/messages`, {
             method: "POST",
@@ -129,7 +188,13 @@ export default function MessagesContent() {
             setMessages((m) => [...m, data.message]);
             setDraft("");
             loadConversations();
+         } else {
+            setChatError(data.message ?? "Could not send message.");
          }
+      } catch {
+         setChatError(
+            "Could not send message. Check your connection and try again.",
+         );
       } finally {
          setSending(false);
       }
@@ -138,7 +203,6 @@ export default function MessagesContent() {
    /* ---------- Filter conversations ---------- */
    const filtered = conversations.filter((c) => {
       if (filter === "unread" && c.unreadCount === 0) return false;
-      if (filter === "requests") return false;
       if (search) {
          const q = search.toLowerCase();
          const matchTitle = c.title?.toLowerCase().includes(q);
@@ -156,7 +220,7 @@ export default function MessagesContent() {
    };
 
    return (
-      <div className={styles.wrap}>
+      <div className={`${styles.wrap} ${activeId ? styles.wrapChatOpen : ""}`}>
          {/* ============ Column 1: list ============ */}
          <aside className={styles.list}>
             <div className={styles.listHead}>
@@ -232,15 +296,14 @@ export default function MessagesContent() {
                      <span className={styles.tabCount}>{unreadTotal}</span>
                   )}
                </button>
-               <button
-                  className={`${styles.tab} ${filter === "requests" ? styles.tabActive : ""}`}
-                  onClick={() => setFilter("requests")}
-               >
-                  Requests
-               </button>
             </div>
 
             <div className={styles.convoList}>
+               {listError && (
+                  <div className={styles.chatError} role="alert">
+                     {listError}
+                  </div>
+               )}
                {loadingList ? (
                   <div className={styles.emptyList}>Loading…</div>
                ) : filtered.length === 0 ? (
@@ -328,6 +391,25 @@ export default function MessagesContent() {
             ) : (
                <>
                   <header className={styles.chatHead}>
+                     <button
+                        type="button"
+                        className={styles.chatBackBtn}
+                        onClick={() => router.push(pathname)}
+                        aria-label="Back to conversations"
+                     >
+                        <svg
+                           width="18"
+                           height="18"
+                           viewBox="0 0 24 24"
+                           fill="none"
+                           stroke="currentColor"
+                           strokeWidth="2"
+                           strokeLinecap="round"
+                           strokeLinejoin="round"
+                        >
+                           <path d="m15 18-6-6 6-6" />
+                        </svg>
+                     </button>
                      <div className={styles.chatAvatar}>
                         {chatAvatar ? (
                            <img src={chatAvatar} alt="" />
@@ -340,6 +422,12 @@ export default function MessagesContent() {
                         <div className={styles.chatStatus}>Active now</div>
                      </div>
                   </header>
+
+                  {chatError && (
+                     <p className={styles.chatError} role="alert">
+                        {chatError}
+                     </p>
+                  )}
 
                   <div className={styles.chatBody}>
                      {loadingChat ? (

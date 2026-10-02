@@ -1,0 +1,135 @@
+.page {
+   width: min(100%, 820px);
+   margin-inline: auto;
+}
+
+.composer {
+   display: flex;
+   gap: 12px;
+   padding: 16px;
+   margin-bottom: 20px;
+   border: 1px solid var(--color-border);
+   border-radius: 8px;
+   background: var(--color-surface);
+}
+
+.composerIdentity,
+.postIdentity {
+   display: grid;
+   width: 38px;
+   height: 38px;
+   flex: 0 0 auto;
+   place-items: center;
+   border-radius: 50%;
+   background: var(--color-primary-light);
+   color: var(--color-primary);
+   font-size: 0.9rem;
+   font-weight: 700;
+}
+
+.composerBody {
+   flex: 1;
+   min-width: 0;
+}
+
+.composer textarea {
+   display: block;
+   width: 100%;
+   min-height: 82px;
+   resize: vertical;
+   padding: 10px 12px;
+   border: 1px solid var(--color-border);
+   border-radius: 6px;
+   background: var(--color-background);
+   color: var(--color-text);
+   font: inherit;
+   font-size: 0.9rem;
+}
+
+.composerFooter {
+   display: flex;
+   align-items: center;
+   justify-content: flex-end;
+   gap: 12px;
+   padding-top: 9px;
+}
+
+.composerFooter span {
+   color: var(--color-text-muted);
+   font-size: 0.75rem;
+}
+
+.composerFooter button {
+   min-height: 34px;
+   padding: 0 14px;
+   border: 0;
+   border-radius: 5px;
+   background: var(--color-primary);
+   color: #fff;
+   font-weight: 600;
+}
+
+.composerFooter button:disabled {
+   opacity: 0.5;
+}
+
+.feed {
+   display: flex;
+   flex-direction: column;
+}
+
+.post {
+   display: flex;
+   gap: 12px;
+   padding: 18px 4px;
+   border-top: 1px solid var(--color-border);
+}
+
+.postBody {
+   flex: 1;
+   min-width: 0;
+}
+
+.postBody header {
+   display: flex;
+   flex-wrap: wrap;
+   align-items: baseline;
+   gap: 8px;
+}
+
+.postBody header strong {
+   color: var(--color-text);
+   font-size: 0.88rem;
+}
+
+.postBody time {
+   color: var(--color-text-muted);
+   font-size: 0.72rem;
+}
+
+.postBody p {
+   margin-top: 7px;
+   color: var(--color-text-secondary);
+   font-size: 0.9rem;
+   line-height: 1.55;
+   overflow-wrap: anywhere;
+   white-space: pre-wrap;
+}
+
+.empty {
+   padding: 36px 16px;
+   border-top: 1px solid var(--color-border);
+   color: var(--color-text-muted);
+   text-align: center;
+   font-size: 0.9rem;
+}
+
+.error {
+   padding: 9px 12px;
+   margin-bottom: 12px;
+   border: 1px solid #efb4b0;
+   border-radius: 6px;
+   background: #fff1f0;
+   color: #b42318;
+   font-size: 0.85rem;
+}

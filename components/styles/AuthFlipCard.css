@@ -369,6 +369,15 @@
    color: var(--danger);
 }
 
+.field__success {
+   padding: 8px 10px;
+   border: 1px solid rgba(25, 167, 160, 0.4);
+   border-radius: 8px;
+   background: rgba(25, 167, 160, 0.12);
+   color: var(--text);
+   font-size: 0.8rem;
+}
+
 .field__error--block {
    padding: 8px 10px;
    border-radius: 8px;

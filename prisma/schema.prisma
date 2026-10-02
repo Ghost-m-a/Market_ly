@@ -18,10 +18,14 @@ model User {
    emailVerified DateTime?
    image         String?
    passwordHash  String?
+   role          UserRole  @default(USER)
+   creditsBalance Int      @default(0)
    createdAt     DateTime  @default(now())
 
    accounts    Account[]
    sessions    Session[]
+   emailVerificationTokens EmailVerificationToken[]
+   passwordResetTokens PasswordResetToken[]
    campaigns   Campaign[]       @relation("CampaignCreator")
    members     CampaignMember[]
    submissions Submission[]
@@ -31,7 +35,13 @@ model User {
    notifications           Notification[]
    transactions            Transaction[]
    contributions           CampaignContributor[]
+   creditTransactions     CreditLedger[]
 
+}
+
+enum UserRole {
+   USER
+   ADMIN
 }
 
 model Account {
@@ -70,6 +80,32 @@ model VerificationToken {
    @@unique([identifier, token])
 }
 
+model PasswordResetToken {
+   id        String   @id @default(cuid())
+   userId    String
+   tokenHash String   @unique
+   expiresAt DateTime
+   createdAt DateTime @default(now())
+
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@index([userId])
+   @@index([expiresAt])
+}
+
+model EmailVerificationToken {
+   id        String   @id @default(cuid())
+   userId    String
+   tokenHash String   @unique
+   expiresAt DateTime
+   createdAt DateTime @default(now())
+
+   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+   @@index([userId])
+   @@index([expiresAt])
+}
+
 // ================================
 // Campaigns
 // ================================
@@ -103,6 +139,8 @@ model Campaign {
    spentCents  Int @default(0)
    budget      Decimal @default(0) @db.Decimal(10, 2)
    minimumContribution Decimal @default(0) @db.Decimal(10, 2)
+   targetViews Int @default(0)
+   campaignCostCredits Int @default(0)
 
    // Payout per 1,000 views (in cents)
    rateTiktokCents    Int @default(0)
@@ -130,6 +168,7 @@ model Campaign {
    submissions Submission[]
    members     CampaignMember[]
    contributors CampaignContributor[]
+   creditTransactions CreditLedger[]
    transactions Transaction[]
 
    @@index([status])
@@ -273,5 +312,26 @@ model CampaignContributor {
    campaign Campaign @relation(fields: [campaignId], references: [id])
 
    @@unique([campaignId, userId])
+   @@index([campaignId])
+}
+
+model CreditPricing {
+   id                       String   @id @default("default")
+   creditsPerThousandViews  Int      @default(0)
+   updatedAt                DateTime @updatedAt
+}
+
+model CreditLedger {
+   id          String   @id @default(cuid())
+   userId      String
+   campaignId  String?
+   amount      Int
+   description String
+   createdAt   DateTime @default(now())
+
+   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+   campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+
+   @@index([userId, createdAt])
    @@index([campaignId])
 }

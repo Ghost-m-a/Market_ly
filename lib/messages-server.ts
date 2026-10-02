@@ -154,7 +154,7 @@ export async function getMessages(
    };
 }
 
-/** Send a message. Auto-joins the sender if they aren't a member yet. */
+/** Send a message only when the sender belongs to the conversation. */
 export async function sendMessage(
    conversationId: string,
    senderId: string,
@@ -164,12 +164,10 @@ export async function sendMessage(
    if (!trimmed) throw new Error("EMPTY_MESSAGE");
    if (trimmed.length > 4000) throw new Error("MESSAGE_TOO_LONG");
 
-   // Ensure membership
-   await prisma.conversationMember.upsert({
+   const membership = await prisma.conversationMember.findUnique({
       where: { conversationId_userId: { conversationId, userId: senderId } },
-      create: { conversationId, userId: senderId },
-      update: {},
    });
+   if (!membership) throw new Error("NOT_MEMBER");
 
    const recipients = await prisma.conversationMember.findMany({
       where: { conversationId, userId: { not: senderId } },

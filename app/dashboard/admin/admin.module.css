@@ -1,0 +1,192 @@
+.page {
+   display: flex;
+   flex-direction: column;
+   gap: 28px;
+   padding-bottom: 40px;
+}
+
+.header,
+.sectionHeader {
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   gap: 16px;
+}
+
+.header h1 {
+   font-size: 1.6rem;
+}
+
+.header p,
+.sectionHeader span,
+.loading {
+   margin-top: 4px;
+   color: var(--color-text-secondary);
+   font-size: 0.875rem;
+}
+
+.section {
+   min-width: 0;
+   border-top: 1px solid var(--color-border);
+}
+
+.sectionHeader {
+   padding: 14px 0;
+}
+
+.sectionHeader h2 {
+   font-size: 1rem;
+}
+
+.tableScroll {
+   width: 100%;
+   overflow-x: auto;
+   border: 1px solid var(--color-border);
+   border-radius: 6px;
+   background: var(--color-surface);
+}
+
+.tableScroll table {
+   width: 100%;
+   min-width: 900px;
+   border-collapse: collapse;
+   text-align: left;
+}
+
+.tableScroll th,
+.tableScroll td {
+   padding: 12px 14px;
+   border-bottom: 1px solid var(--color-border);
+   font-size: 0.84rem;
+   vertical-align: middle;
+}
+
+.tableScroll th {
+   background: var(--color-background);
+   color: var(--color-text-secondary);
+   font-size: 0.74rem;
+   font-weight: 600;
+   white-space: nowrap;
+}
+
+.tableScroll tr:last-child td {
+   border-bottom: 0;
+}
+
+.tableScroll td strong,
+.secondary {
+   display: block;
+}
+
+.secondary {
+   margin-top: 3px;
+   color: var(--color-text-muted);
+   font-size: 0.75rem;
+}
+
+.status {
+   display: inline-block;
+   padding: 3px 7px;
+   border: 1px solid var(--color-border);
+   border-radius: 4px;
+   font-size: 0.7rem;
+   font-weight: 600;
+}
+
+.actions {
+   display: flex;
+   align-items: center;
+   gap: 6px;
+}
+
+.actions button,
+.primaryButton,
+.refreshButton,
+.actionButton {
+   min-height: 32px;
+   padding: 5px 9px;
+   border: 1px solid var(--color-border);
+   border-radius: 5px;
+   background: var(--color-surface);
+   color: var(--color-text);
+   font-size: 0.75rem;
+   font-weight: 600;
+   white-space: nowrap;
+}
+
+.actions button:hover:not(:disabled) {
+   background: var(--color-background);
+}
+
+.refreshButton:hover:not(:disabled),
+.actionButton:hover:not(:disabled) {
+   background: var(--color-background);
+}
+
+.actions button:disabled {
+   opacity: 0.45;
+}
+
+.actions .dangerButton {
+   color: #b42318;
+}
+
+.primaryButton {
+   padding-inline: 12px;
+   border-color: var(--color-primary);
+   background: var(--color-primary);
+   color: #fff;
+}
+
+.actionButton {
+   min-height: 30px;
+}
+
+.primaryButton:hover {
+   background: var(--color-primary-hover);
+}
+
+.pricingForm {
+   display: grid;
+   grid-template-columns: minmax(180px, 280px) minmax(140px, 200px) auto;
+   align-items: center;
+   gap: 10px;
+   padding: 14px;
+   border: 1px solid var(--color-border);
+   border-radius: 6px;
+   background: var(--color-surface);
+}
+
+.pricingForm label {
+   color: var(--color-text-secondary);
+   font-size: 0.84rem;
+   font-weight: 600;
+}
+
+.pricingForm input {
+   min-height: 34px;
+   padding: 6px 9px;
+}
+
+.error {
+   padding: 10px 12px;
+   border: 1px solid #efb4b0;
+   border-radius: 5px;
+   background: #fff1f0;
+   color: #b42318;
+   font-size: 0.85rem;
+}
+
+@media (max-width: 640px) {
+   .header {
+      align-items: flex-start;
+   }
+
+   .header h1 {
+      font-size: 1.35rem;
+   }
+
+   .pricingForm {
+      grid-template-columns: 1fr;
+   }
+}

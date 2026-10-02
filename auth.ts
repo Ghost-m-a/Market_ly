@@ -36,6 +36,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
             const user = await prisma.user.findUnique({ where: { email } });
             if (!user) return null;
+            if (!user.emailVerified) {
+               throw new Error("Verify your email address before signing in.");
+            }
             if (!user.passwordHash) {
                throw new Error(
                   "This account was created with Google or Facebook. Sign in with those instead.",
@@ -48,6 +51,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                name: user.name,
                email: user.email,
                image: user.image ?? undefined,
+               role: user.role,
             };
          },
       }),
@@ -55,12 +59,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
    callbacks: {
       async jwt({ token, user }) {
-         if (user) token.id = user.id;
+         if (user) {
+            token.id = user.id;
+            token.role = user.role;
+         }
          return token;
       },
       async session({ session, token }) {
          if (session.user) {
             session.user.id = (token.id as string) ?? token.sub!;
+            session.user.role = token.role === "ADMIN" ? "ADMIN" : "USER";
          }
          return session;
       },

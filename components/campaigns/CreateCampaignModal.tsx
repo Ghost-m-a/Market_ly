@@ -39,6 +39,9 @@ export default function CreateCampaignModal({
    const [coverImage, setCoverImage] = useState("");
    const [description, setDescription] = useState("");
    const [budgetDollars, setBudgetDollars] = useState("");
+   const [targetViews, setTargetViews] = useState("");
+   const [creditsPerThousandViews, setCreditsPerThousandViews] = useState(0);
+   const [creditBalance, setCreditBalance] = useState(0);
    const [minimumContribution, setMinimumContribution] = useState("");
    const [minPayout, setMinPayout] = useState("");
    const [maxPayout, setMaxPayout] = useState("");
@@ -57,6 +60,13 @@ export default function CreateCampaignModal({
 
    const [error, setError] = useState("");
    const [saving, setSaving] = useState(false);
+   const targetViewCountForQuote = Number(targetViews);
+   const estimatedCreditCost =
+      Number.isSafeInteger(targetViewCountForQuote) &&
+      targetViewCountForQuote > 0 &&
+      creditsPerThousandViews > 0
+         ? Math.ceil((targetViewCountForQuote * creditsPerThousandViews) / 1000)
+         : 0;
 
    useEffect(() => {
       if (!open) return;
@@ -68,6 +78,7 @@ export default function CreateCampaignModal({
          setCoverImage("");
          setDescription("");
          setBudgetDollars("");
+         setTargetViews("");
          setMinimumContribution("");
          setMinPayout("");
          setMaxPayout("");
@@ -91,6 +102,7 @@ export default function CreateCampaignModal({
       setCoverImage(campaign.coverImage ?? "");
       setDescription(campaign.description ?? "");
       setBudgetDollars((campaign.budgetCents / 100).toFixed(2));
+      setTargetViews(String(campaign.targetViews));
       setMinimumContribution(Number(campaign.minimumContribution).toFixed(2));
       setMinPayout((campaign.minPayoutCents / 100).toFixed(2));
       setMaxPayout((campaign.maxPayoutCents / 100).toFixed(2));
@@ -106,6 +118,30 @@ export default function CreateCampaignModal({
          facebook: (campaign.rates.facebook / 100).toFixed(2),
       });
    }, [open, campaign]);
+
+   useEffect(() => {
+      if (!open) return;
+      let active = true;
+      Promise.all([
+         fetch("/api/credit-pricing", { cache: "no-store" }).then((response) =>
+            response.json(),
+         ),
+         fetch("/api/me/credits", { cache: "no-store" }).then((response) =>
+            response.json(),
+         ),
+      ])
+         .then(([pricing, credits]) => {
+            if (!active) return;
+            setCreditsPerThousandViews(pricing.creditsPerThousandViews ?? 0);
+            setCreditBalance(credits.balance ?? 0);
+         })
+         .catch(() => {
+            if (active) setError("Could not load credit pricing or balance.");
+         });
+      return () => {
+         active = false;
+      };
+   }, [open]);
 
    const togglePlatform = (p: Platform) => {
       setPlatforms((cur) =>
@@ -124,6 +160,13 @@ export default function CreateCampaignModal({
       const budgetCents = Math.round(parseFloat(budgetDollars || "0") * 100);
       if (budgetCents <= 0)
          return setError("Budget must be greater than zero.");
+      const targetViewCount = Number(targetViews);
+      if (
+         !campaign &&
+         (!Number.isSafeInteger(targetViewCount) || targetViewCount < 1)
+      ) {
+         return setError("Enter a target view count greater than zero.");
+      }
 
       const ratePayload = {
          tiktok: Math.round(parseFloat(rates.tiktok || "0") * 100),
@@ -147,6 +190,7 @@ export default function CreateCampaignModal({
                   coverImage: coverImage.trim() || null,
                   description: description.trim() || null,
                   budgetCents,
+                  targetViews: targetViewCount,
                   minimumContribution: Number(minimumContribution || "0"),
                   rates: ratePayload,
                   platforms,
@@ -238,6 +282,40 @@ export default function CreateCampaignModal({
                placeholder="What this campaign is about…"
                rows={3}
             />
+
+            <section className={styles.creditQuote}>
+               <label htmlFor="campaign-target-views">Target views</label>
+               <input
+                  id="campaign-target-views"
+                  type="number"
+                  min="1"
+                  max="1000000000"
+                  step="1"
+                  value={targetViews}
+                  onChange={(event) => setTargetViews(event.target.value)}
+                  disabled={!!campaign}
+                  required={!campaign}
+               />
+               <p>
+                  {campaign
+                     ? `Campaign charge: ${campaign.campaignCostCredits.toLocaleString()} credits`
+                     : `Estimated launch charge: ${estimatedCreditCost.toLocaleString()} credits`}
+               </p>
+               {!campaign && (
+                  <p>
+                     Available balance: {creditBalance.toLocaleString()} credits
+                  </p>
+               )}
+               {creditsPerThousandViews <= 0 && (
+                  <p>Campaign pricing has not been configured by an admin.</p>
+               )}
+               {estimatedCreditCost > creditBalance && (
+                  <p className={styles.creditWarning}>
+                     Your current credit balance is too low to launch this
+                     campaign.
+                  </p>
+               )}
+            </section>
 
             <div className={styles.row}>
                <Field

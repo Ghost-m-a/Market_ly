@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 import styles from "./styles/Sidebar.module.css";
 
@@ -184,7 +184,11 @@ type Item = {
    badge?: "New" | "Beta";
 };
 
-type Workspace = "personal" | "business";
+type Workspace = {
+   id: string;
+   name: string;
+   type: "PERSONAL" | "BUSINESS";
+};
 
 /* ---------- Config ---------- */
 const PERSONAL_ITEMS: Item[] = [
@@ -262,10 +266,116 @@ export default function Sidebar({
    onAddWorkspace,
 }: Props) {
    const pathname = usePathname();
+   const router = useRouter();
    const { user } = useAuth();
 
-   const [workspace, setWorkspace] = useState<Workspace>("personal");
+   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
+   const [activeWorkspaceId, setActiveWorkspaceId] = useState("");
+   const [workspaceName, setWorkspaceName] = useState("");
+   const [workspaceError, setWorkspaceError] = useState("");
+   const [workspaceBusy, setWorkspaceBusy] = useState(false);
+   const [workspaceMenuOpen, setWorkspaceMenuOpen] = useState(false);
    const [moreOpen, setMoreOpen] = useState(false);
+
+   useEffect(() => {
+      let active = true;
+      if (!user?.id) {
+         setWorkspaces([]);
+         setActiveWorkspaceId("");
+         return;
+      }
+
+      fetch("/api/workspaces", { cache: "no-store" })
+         .then(async (response) => {
+            const data = await response.json();
+            if (!response.ok)
+               throw new Error(data.message ?? "Could not load workspaces.");
+            if (active) {
+               setWorkspaces(data.workspaces ?? []);
+               setActiveWorkspaceId(data.activeWorkspaceId ?? "");
+               setWorkspaceError("");
+            }
+         })
+         .catch((error: unknown) => {
+            if (active) {
+               setWorkspaceError(
+                  error instanceof Error
+                     ? error.message
+                     : "Could not load workspaces.",
+               );
+            }
+         });
+
+      return () => {
+         active = false;
+      };
+   }, [user?.id]);
+
+   const personalWorkspace = workspaces.find(
+      (workspace) => workspace.type === "PERSONAL",
+   );
+   const activeBusiness = workspaces.find(
+      (workspace) =>
+         workspace.id === activeWorkspaceId && workspace.type === "BUSINESS",
+   );
+   const activeWorkspace = workspaces.find(
+      (workspace) => workspace.id === activeWorkspaceId,
+   );
+
+   const selectWorkspace = async (workspaceId: string) => {
+      setWorkspaceBusy(true);
+      setWorkspaceError("");
+      try {
+         const response = await fetch("/api/workspaces", {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ workspaceId }),
+         });
+         const data = await response.json();
+         if (!response.ok)
+            throw new Error(data.message ?? "Could not switch workspace.");
+         setActiveWorkspaceId(data.activeWorkspaceId);
+         setWorkspaceMenuOpen(false);
+         router.push("/dashboard");
+      } catch (error) {
+         setWorkspaceError(
+            error instanceof Error
+               ? error.message
+               : "Could not switch workspace.",
+         );
+      } finally {
+         setWorkspaceBusy(false);
+      }
+   };
+
+   const createWorkspace = async (event: FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      setWorkspaceBusy(true);
+      setWorkspaceError("");
+      try {
+         const response = await fetch("/api/workspaces", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name: workspaceName }),
+         });
+         const data = await response.json();
+         if (!response.ok)
+            throw new Error(data.message ?? "Could not create workspace.");
+         setWorkspaces((current) => [...current, data.workspace]);
+         setActiveWorkspaceId(data.activeWorkspaceId);
+         setWorkspaceName("");
+         setWorkspaceMenuOpen(false);
+         router.push("/dashboard");
+      } catch (error) {
+         setWorkspaceError(
+            error instanceof Error
+               ? error.message
+               : "Could not create workspace.",
+         );
+      } finally {
+         setWorkspaceBusy(false);
+      }
+   };
 
    const isActive = (href: string) => {
       if (href === "/dashboard") return pathname === "/dashboard";
@@ -320,49 +430,109 @@ export default function Sidebar({
          >
             {/* ============ Workspace switcher ============ */}
             <div className={styles.workspaceRow}>
-               {/* Personal Workspace Button */}
-               <button
-                  type="button"
-                  className={`${styles.workspaceBtn} ${
-                     workspace === "personal" ? styles.workspaceBtnActive : ""
-                  }`}
-                  onClick={() => setWorkspace("personal")}
-                  aria-label="Personal workspace"
-                  title="Personal"
-               >
-                  <IconUser />
-               </button>
+               {personalWorkspace && (
+                  <button
+                     type="button"
+                     className={`${styles.workspaceBtn} ${
+                        activeWorkspaceId === personalWorkspace.id
+                           ? styles.workspaceBtnActive
+                           : ""
+                     }`}
+                     onClick={() => void selectWorkspace(personalWorkspace.id)}
+                     aria-label="Personal workspace"
+                     title={personalWorkspace.name}
+                     disabled={workspaceBusy}
+                  >
+                     <IconUser />
+                  </button>
+               )}
 
-               {/* Business Workspace Button (Icon instead of initials) */}
-               <button
-                  type="button"
-                  className={`${styles.workspacePill} ${
-                     workspace === "business" ? styles.workspacePillActive : ""
-                  }`}
-                  onClick={() => setWorkspace("business")}
-                  aria-label="Business workspace"
-                  title="Business"
-               >
-                  <IconBriefcase />
-               </button>
+               {activeBusiness && (
+                  <button
+                     type="button"
+                     className={`${styles.workspacePill} ${styles.workspacePillActive}`}
+                     onClick={() => setWorkspaceMenuOpen((open) => !open)}
+                     aria-label={`${activeBusiness.name} workspace menu`}
+                     aria-expanded={workspaceMenuOpen}
+                     title={activeBusiness.name}
+                  >
+                     {activeBusiness.name
+                        .split(/\s+/)
+                        .map((part) => part[0])
+                        .join("")
+                        .slice(0, 2)
+                        .toUpperCase()}
+                  </button>
+               )}
 
-               {/* Add Workspace Button */}
-               {!collapsed && (
+               {!activeBusiness && (
+                  <button
+                     type="button"
+                     className={styles.workspacePill}
+                     onClick={() => setWorkspaceMenuOpen((open) => !open)}
+                     aria-label="Choose a business workspace"
+                     aria-expanded={workspaceMenuOpen}
+                  >
+                     <IconBriefcase />
+                  </button>
+               )}
+
+               {!collapsed && user && (
                   <button
                      type="button"
                      className={styles.addBtn}
-                     onClick={onAddWorkspace}
+                     onClick={() => setWorkspaceMenuOpen((open) => !open)}
                      aria-label="Add workspace"
-                     title="Add business"
+                     title="Manage workspaces"
                   >
                      <IconPlus />
                   </button>
                )}
+
+               {workspaceMenuOpen && (
+                  <div className={styles.workspaceMenu}>
+                     <strong>Workspaces</strong>
+                     {workspaces
+                        .filter((workspace) => workspace.type === "BUSINESS")
+                        .map((workspace) => (
+                           <button
+                              key={workspace.id}
+                              type="button"
+                              className={styles.workspaceMenuItem}
+                              onClick={() => void selectWorkspace(workspace.id)}
+                              disabled={workspaceBusy}
+                           >
+                              {workspace.name}
+                           </button>
+                        ))}
+                     <form onSubmit={createWorkspace}>
+                        <input
+                           aria-label="New workspace name"
+                           placeholder="Business name"
+                           value={workspaceName}
+                           onChange={(event) =>
+                              setWorkspaceName(event.target.value)
+                           }
+                           maxLength={60}
+                           minLength={2}
+                           required
+                        />
+                        <button type="submit" disabled={workspaceBusy}>
+                           {workspaceBusy ? "Saving…" : "Create workspace"}
+                        </button>
+                     </form>
+                  </div>
+               )}
             </div>
+            {workspaceError && (
+               <p className={styles.workspaceError} role="alert">
+                  {workspaceError}
+               </p>
+            )}
 
             {/* ============ Navigation ============ */}
             <nav className={styles.nav}>
-               {workspace === "personal" ? (
+               {activeWorkspace?.type !== "BUSINESS" ? (
                   <>
                      {!collapsed && (
                         <div className={styles.groupLabel}>Personal</div>
@@ -470,6 +640,27 @@ export default function Sidebar({
                      <span className={styles.tooltip}>Settings</span>
                   )}
                </Link>
+
+               {user?.role === "ADMIN" && (
+                  <Link
+                     href="/dashboard/admin"
+                     className={`${styles.item} ${
+                        isActive("/dashboard/admin") ? styles.itemActive : ""
+                     }`}
+                     onClick={onCloseMobile}
+                     title={collapsed ? "Admin" : undefined}
+                  >
+                     <span className={styles.itemIcon}>
+                        <IconSettings />
+                     </span>
+                     {!collapsed && (
+                        <span className={styles.itemLabel}>Admin</span>
+                     )}
+                     {collapsed && (
+                        <span className={styles.tooltip}>Admin</span>
+                     )}
+                  </Link>
+               )}
 
                <button
                   type="button"

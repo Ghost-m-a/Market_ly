@@ -99,10 +99,7 @@ export default function AuthModal({ open, onClose, onSuccess }: Props) {
                   className="auth-face auth-face--back"
                   aria-hidden={!isSignup}
                >
-                  <SignupForm
-                     onSwitch={() => setSide("login")}
-                     onSuccess={handleSuccess}
-                  />
+                  <SignupForm onSwitch={() => setSide("login")} />
                </section>
             </div>
          </div>
@@ -280,6 +277,11 @@ function LoginForm({
    const [errors, setErrors] = useState<Errors>({});
    const [serverError, setServerError] = useState("");
    const [loading, setLoading] = useState(false);
+   const [forgotPassword, setForgotPassword] = useState(false);
+   const [forgotEmail, setForgotEmail] = useState("");
+   const [forgotMessage, setForgotMessage] = useState("");
+   const [forgotError, setForgotError] = useState("");
+   const [forgotLoading, setForgotLoading] = useState(false);
 
    const submit = async (e: FormEvent) => {
       e.preventDefault();
@@ -312,6 +314,87 @@ function LoginForm({
          setLoading(false);
       }
    };
+
+   const submitForgotPassword = async (e: FormEvent) => {
+      e.preventDefault();
+      setForgotError("");
+      if (!EMAIL_RE.test(forgotEmail.trim())) {
+         setForgotError("Enter a valid email address.");
+         return;
+      }
+
+      setForgotLoading(true);
+      try {
+         const res = await fetch("/api/auth/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email: forgotEmail.trim() }),
+         });
+         const data = await res.json();
+         if (!res.ok)
+            throw new Error(data.message ?? "Could not send a reset link.");
+         setForgotMessage(data.message);
+      } catch (err) {
+         setForgotError(
+            err instanceof Error ? err.message : "Could not send a reset link.",
+         );
+      } finally {
+         setForgotLoading(false);
+      }
+   };
+
+   if (forgotPassword) {
+      return (
+         <form className="auth-form" onSubmit={submitForgotPassword} noValidate>
+            <Logo />
+            <header className="auth-head">
+               <h2>Reset your password</h2>
+               <p>We&apos;ll email you a link to choose a new password.</p>
+            </header>
+            <div className="field">
+               <label htmlFor={`${uid}-reset-email`}>Email address</label>
+               <input
+                  id={`${uid}-reset-email`}
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  disabled={!!forgotMessage}
+                  aria-invalid={!!forgotError}
+               />
+            </div>
+            {forgotError && (
+               <p className="field__error field__error--block" role="alert">
+                  {forgotError}
+               </p>
+            )}
+            {forgotMessage && (
+               <p className="field__success" role="status">
+                  {forgotMessage}
+               </p>
+            )}
+            <button
+               type="submit"
+               className="btn"
+               disabled={forgotLoading || !!forgotMessage}
+            >
+               {forgotLoading ? "Sending…" : "Send reset link"}
+            </button>
+            <button
+               type="button"
+               className="link link--button"
+               onClick={() => {
+                  setForgotPassword(false);
+                  setForgotError("");
+                  setForgotMessage("");
+               }}
+            >
+               Back to login
+            </button>
+         </form>
+      );
+   }
 
    return (
       <form className="auth-form" onSubmit={submit} noValidate>
@@ -369,7 +452,16 @@ function LoginForm({
                />
                <span>Remember me</span>
             </label>
-            <button type="button" className="link link--button">
+            <button
+               type="button"
+               className="link link--button"
+               onClick={() => {
+                  setForgotEmail(identifier.includes("@") ? identifier : "");
+                  setForgotError("");
+                  setForgotMessage("");
+                  setForgotPassword(true);
+               }}
+            >
                Forgot password?
             </button>
          </div>
@@ -417,13 +509,7 @@ const ROLES = [
    { value: "content-creator", label: "Content Creator" },
 ];
 
-function SignupForm({
-   onSwitch,
-   onSuccess,
-}: {
-   onSwitch: () => void;
-   onSuccess: () => void;
-}) {
+function SignupForm({ onSwitch }: { onSwitch: () => void }) {
    const { signup } = useAuth();
    const uid = useId();
    const fileRef = useRef<HTMLInputElement>(null);
@@ -440,6 +526,7 @@ function SignupForm({
    const [terms, setTerms] = useState(false);
    const [errors, setErrors] = useState<Errors>({});
    const [serverError, setServerError] = useState("");
+   const [verificationMessage, setVerificationMessage] = useState("");
    const [loading, setLoading] = useState(false);
 
    const onPickFile = (e: ChangeEvent<HTMLInputElement>) => {
@@ -479,8 +566,8 @@ function SignupForm({
 
       setLoading(true);
       try {
-         await signup(name, email, password);
-         onSuccess();
+         const message = await signup(name, email, password);
+         setVerificationMessage(message);
       } catch (err) {
          setServerError(
             err instanceof Error
@@ -703,8 +790,22 @@ function SignupForm({
             </p>
          )}
 
-         <button type="submit" className="btn" disabled={loading}>
-            {loading ? "Creating account…" : "Create account"}
+         {verificationMessage && (
+            <p className="field__success" role="status">
+               {verificationMessage}
+            </p>
+         )}
+
+         <button
+            type="submit"
+            className="btn"
+            disabled={loading || !!verificationMessage}
+         >
+            {loading
+               ? "Creating account…"
+               : verificationMessage
+                 ? "Verification email sent"
+                 : "Create account"}
          </button>
 
          <OAuthRow mode="signup" />

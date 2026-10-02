@@ -38,9 +38,18 @@ export async function POST(
    } catch (err) {
       const code = err instanceof Error ? err.message : "UNKNOWN";
       const status =
-         code === "EMPTY_MESSAGE" || code === "MESSAGE_TOO_LONG" ? 400 : 500;
+         code === "EMPTY_MESSAGE" || code === "MESSAGE_TOO_LONG"
+            ? 400
+            : code === "NOT_MEMBER"
+              ? 403
+              : 500;
       return NextResponse.json(
-         { message: "Could not send message." },
+         {
+            message:
+               code === "NOT_MEMBER"
+                  ? "Not a member."
+                  : "Could not send message.",
+         },
          { status },
       );
    }

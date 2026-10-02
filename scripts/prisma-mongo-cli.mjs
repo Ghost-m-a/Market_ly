@@ -4,11 +4,17 @@ import { URL } from "node:url";
 
 config({ path: [".env.local", ".env"] });
 
+const command = process.argv[2];
 const rawUri = process.env.MONGODB_URI;
-if (!rawUri) throw new Error("MONGODB_URI is not configured.");
+if (!rawUri && command === "generate") {
+   process.env.MONGODB_URI = "mongodb://127.0.0.1:27017/marketly";
+}
+if (!process.env.MONGODB_URI) {
+   throw new Error("MONGODB_URI is required for Prisma database commands.");
+}
 
 const validName = /^[A-Za-z0-9_-]{1,63}$/;
-const url = new URL(rawUri);
+const url = new URL(process.env.MONGODB_URI);
 const configuredName = process.env.MONGODB_DATABASE?.trim();
 const uriName = decodeURIComponent(url.pathname.replace(/^\/+/, ""));
 const databaseName =

@@ -37,7 +37,7 @@ enum SubmissionStatus {
 // ================================
 
 model User {
-   id             String    @id @default(cuid()) @map("_id")
+   id             String    @id @default(auto()) @map("_id") @db.ObjectId
    name           String
    email          String    @unique
    emailVerified  DateTime?
@@ -66,8 +66,8 @@ model User {
 }
 
 model Account {
-   id                String  @id @default(cuid()) @map("_id")
-   userId            String
+   id                String  @id @default(auto()) @map("_id") @db.ObjectId
+   userId            String  @db.ObjectId
    type              String
    provider          String
    providerAccountId String
@@ -86,9 +86,9 @@ model Account {
 }
 
 model Session {
-   id           String   @id @default(cuid()) @map("_id")
+   id           String   @id @default(auto()) @map("_id") @db.ObjectId
    sessionToken String   @unique
-   userId       String
+   userId       String   @db.ObjectId
    expires      DateTime
 
    user User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -97,8 +97,8 @@ model Session {
 }
 
 model EmailVerificationToken {
-   id        String   @id @default(cuid()) @map("_id")
-   userId    String
+   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+   userId    String   @db.ObjectId
    tokenHash String   @unique
    expiresAt DateTime
    createdAt DateTime @default(now())
@@ -111,8 +111,8 @@ model EmailVerificationToken {
 }
 
 model PasswordResetToken {
-   id        String   @id @default(cuid()) @map("_id")
-   userId    String
+   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+   userId    String   @db.ObjectId
    tokenHash String   @unique
    expiresAt DateTime
    createdAt DateTime @default(now())
@@ -129,9 +129,9 @@ model PasswordResetToken {
 // ================================
 
 model Campaign {
-   id String @id @default(cuid()) @map("_id")
+   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-   creatorId String
+   creatorId String @db.ObjectId
    creator   User   @relation("CampaignCreator", fields: [creatorId], references: [id], onDelete: Cascade)
 
    // Basics
@@ -186,10 +186,10 @@ model Campaign {
 }
 
 model CampaignMember {
-   id String @id @default(cuid()) @map("_id")
+   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-   campaignId String
-   userId     String
+   campaignId String @db.ObjectId
+   userId     String @db.ObjectId
    campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -201,10 +201,10 @@ model CampaignMember {
 }
 
 model Submission {
-   id String @id @default(cuid()) @map("_id")
+   id String @id @default(auto()) @map("_id") @db.ObjectId
 
-   campaignId String
-   userId     String
+   campaignId String @db.ObjectId
+   userId     String @db.ObjectId
    campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
    user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -229,7 +229,7 @@ model Submission {
 // ================================
 
 model Conversation {
-   id        String   @id @default(cuid()) @map("_id")
+   id        String   @id @default(auto()) @map("_id") @db.ObjectId
    title     String?
    isGroup   Boolean  @default(false)
    createdAt DateTime @default(now())
@@ -243,9 +243,9 @@ model Conversation {
 }
 
 model ConversationMember {
-   id             String   @id @default(cuid()) @map("_id")
-   conversationId String
-   userId         String
+   id             String   @id @default(auto()) @map("_id") @db.ObjectId
+   conversationId String   @db.ObjectId
+   userId         String   @db.ObjectId
    joinedAt       DateTime @default(now())
    lastReadAt     DateTime @default(now())
 
@@ -258,10 +258,10 @@ model ConversationMember {
 }
 
 model Message {
-   id             String   @id @default(cuid()) @map("_id")
-   conversationId String
-   senderId       String
-   recipientId    String?
+   id             String   @id @default(auto()) @map("_id") @db.ObjectId
+   conversationId String   @db.ObjectId
+   senderId       String   @db.ObjectId
+   recipientId    String?  @db.ObjectId
    body           String
    content        String   @default("")
    messageType    String   @default("private")
@@ -284,8 +284,8 @@ model Message {
 // ================================
 
 model Notification {
-   id        String   @id @default(cuid()) @map("_id")
-   userId    String
+   id        String   @id @default(auto()) @map("_id") @db.ObjectId
+   userId    String   @db.ObjectId
    title     String
    message   String
    type      String
@@ -300,65 +300,47 @@ model Notification {
 }
 
 // ================================
-// Payments & Credits
+// Payments & Credits (الموديلات الناقصة والمكملة للعلاقات)
 // ================================
 
 model Transaction {
-   id              String   @id @default(cuid()) @map("_id")
-   amountCents     Int
-   currency        String   @default("USD")
-   status          String
-   paymentId       String?
-   providerRef     String?
-   userId          String
-   amountPaidCents Int      @default(0)
-   campaignId      String?
-   createdAt       DateTime @default(now())
-   updatedAt       DateTime @updatedAt
+   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+   userId     String   @db.ObjectId
+   campaignId String?  @db.ObjectId
+   amount     Int
+   currency   String   @default("usd")
+   status     String
+   createdAt  DateTime @default(now())
 
-   user     User      @relation(fields: [userId], references: [id])
-   campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+   campaign Campaign? @relation(fields: [campaignId], references: [id])
 
-   @@index([userId, status])
-   @@index([createdAt])
    @@map("Transaction")
 }
 
 model CampaignContributor {
-   id                String   @id @default(cuid()) @map("_id")
-   userId            String
-   campaignId        String
-   contributionCents Int
-   createdAt         DateTime @default(now())
+   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+   campaignId String   @db.ObjectId
+   userId     String   @db.ObjectId
+   amount     Int
+   createdAt  DateTime @default(now())
 
-   user     User     @relation(fields: [userId], references: [id])
-   campaign Campaign @relation(fields: [campaignId], references: [id])
+   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+   user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-   @@unique([campaignId, userId])
-   @@index([campaignId])
    @@map("CampaignContributor")
 }
 
-model CreditPricing {
-   id                      String   @id @default("default") @map("_id")
-   creditsPerThousandViews Int      @default(0)
-   updatedAt               DateTime @updatedAt
-
-   @@map("CreditPricing")
-}
-
 model CreditLedger {
-   id          String   @id @default(cuid()) @map("_id")
-   userId      String
-   campaignId  String?
-   amount      Int
-   description String
-   createdAt   DateTime @default(now())
+   id         String   @id @default(auto()) @map("_id") @db.ObjectId
+   userId     String   @db.ObjectId
+   campaignId String?  @db.ObjectId
+   amount     Int
+   type       String   // "DEBIT" or "CREDIT"
+   createdAt  DateTime @default(now())
 
    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-   campaign Campaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+   campaign Campaign? @relation(fields: [campaignId], references: [id])
 
-   @@index([userId, createdAt])
-   @@index([campaignId])
    @@map("CreditLedger")
 }

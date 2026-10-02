@@ -1,10 +1,35 @@
-import NextAuth from "next-auth";
+import NextAuth, { type DefaultSession } from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import Facebook from "next-auth/providers/facebook";
 import { prisma } from "@/lib/prisma";
 import { verifyPassword } from "@/lib/auth";
+
+// 1. إصلاح مشكلة المتغيرات المتعارضة (Identifiers) وتحديث الـ Module Augmentation لـ NextAuth v5
+declare module "next-auth" {
+   interface Session {
+      user: {
+         id: string;
+         role: "ADMIN" | "USER";
+      } & DefaultSession["user"];
+   }
+
+   // إزالة كلمة 'optional (?)' ومطابقتها للمتغيرات الافتراضية لمنع خطأ الـ Modifiers
+   interface User {
+      role: string;
+      passwordHash: string | null;
+      emailVerified: Date | null;
+   }
+}
+
+// 2. حل خطأ "module 'next-auth/jwt' cannot be found" عن طريق توسيع نطاق واجهة الـ JWT المدمجة بالمسار الصحيح
+declare module "@auth/core/jwt" {
+   interface JWT {
+      id?: string;
+      role?: string;
+   }
+}
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
    adapter: PrismaAdapter(prisma),
@@ -45,6 +70,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
             const user = await prisma.user.findUnique({ where: { email } });
             if (!user) return null;
+
             if (!user.emailVerified) {
                throw new Error("Verify your email address before signing in.");
             }
@@ -60,7 +86,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                name: user.name,
                email: user.email,
                image: user.image ?? undefined,
-               role: user.role,
+               role: user.role ?? "USER",
+               passwordHash: user.passwordHash,
+               emailVerified: user.emailVerified,
             };
          },
       }),

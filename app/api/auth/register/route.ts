@@ -1,118 +1,65 @@
 import { NextResponse } from "next/server";
-import { randomBytes } from "node:crypto";
 import { prisma } from "@/lib/prisma";
 import { hashPassword } from "@/lib/auth";
-import {
-   hashResetToken,
-   sendEmailVerificationEmail,
-} from "@/lib/password-reset";
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+import { makeToken, hashToken, sendEmail } from "@/lib/verify";
 
 export async function POST(req: Request) {
+   const { name, email, password } = await req.json();
+
+   if (!name || !email || !password || password.length < 8) {
+      return NextResponse.json({ message: "Invalid input." }, { status: 400 });
+   }
+
+   const normalized = email.trim().toLowerCase();
+
+   const existing = await prisma.user.findUnique({
+      where: { email: normalized },
+   });
+
+   // If user exists and is already verified, do nothing (generic message)
+   if (existing?.emailVerified) {
+      return NextResponse.json({ message: "Check your email." });
+   }
+
+   // Otherwise create or update the user
+   const user = existing
+      ? await prisma.user.update({
+           where: { id: existing.id },
+           data: { name, passwordHash: hashPassword(password) },
+        })
+      : await prisma.user.create({
+           data: {
+              name,
+              email: normalized,
+              passwordHash: hashPassword(password),
+           },
+        });
+
+   // One active token per user
+   const token = makeToken();
+   await prisma.emailVerificationToken.deleteMany({
+      where: { userId: user.id },
+   });
+   await prisma.emailVerificationToken.create({
+      data: {
+         userId: user.id,
+         tokenHash: hashToken(token),
+         expiresAt: new Date(Date.now() + 60 * 60 * 1000), // 1h
+      },
+   });
+
+   const url = `${process.env.NEXT_PUBLIC_APP_URL}/verify?token=${token}`;
+
    try {
-      const { name, email, password } = (await req.json()) ?? {};
-
-      if (
-         typeof name !== "string" ||
-         name.trim().length < 2 ||
-         typeof email !== "string" ||
-         !EMAIL_RE.test(email.trim()) ||
-         typeof password !== "string"
-      ) {
-         return NextResponse.json(
-            { message: "Enter a name, valid email, and password." },
-            { status: 400 },
-         );
-      }
-
-      if (password.length < 8) {
-         return NextResponse.json(
-            { message: "Password must be at least 8 characters." },
-            { status: 400 },
-         );
-      }
-
-      if (
-         !process.env.RESEND_API_KEY ||
-         !process.env.EMAIL_FROM ||
-         !process.env.NEXT_PUBLIC_APP_URL
-      ) {
-         return NextResponse.json(
-            { message: "Email verification is not configured on this server." },
-            { status: 503 },
-         );
-      }
-
-      const normalized = email.trim().toLowerCase();
-
-      const existing = await prisma.user.findFirst({
-         where: { email: { equals: normalized, mode: "insensitive" } },
-      });
-      if (existing) {
-         return NextResponse.json(
-            { message: "An account with that email already exists." },
-            { status: 409 },
-         );
-      }
-
-      const token = randomBytes(32).toString("hex");
-      const tokenHash = hashResetToken(token);
-      const user = await prisma.user.create({
-         data: {
-            name: name.trim(),
-            email: normalized,
-            passwordHash: hashPassword(password),
-            emailVerificationTokens: {
-               create: {
-                  tokenHash,
-                  expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-               },
-            },
-         },
-      });
-
-      const verificationUrl = new URL(
-         "/verify-email",
-         process.env.NEXT_PUBLIC_APP_URL,
-      );
-      verificationUrl.searchParams.set("token", token);
-      try {
-         await sendEmailVerificationEmail(
-            user.email,
-            verificationUrl.toString(),
-         );
-      } catch {
-         await prisma.user.delete({ where: { id: user.id } });
-         return NextResponse.json(
-            { message: "Could not send verification email. Please try again." },
-            { status: 502 },
-         );
-      }
-
+      await sendEmail(user.email, "Verify your email", url);
+   } catch {
       return NextResponse.json(
-         {
-            message:
-               "Account created. Check your email to verify your address.",
-         },
-         { status: 201 },
-      );
-   } catch (err) {
-      if (
-         typeof err === "object" &&
-         err !== null &&
-         "code" in err &&
-         err.code === "P2002"
-      ) {
-         return NextResponse.json(
-            { message: "An account with that email already exists." },
-            { status: 409 },
-         );
-      }
-      console.error("[register] error:", err);
-      return NextResponse.json(
-         { message: "Could not create account." },
-         { status: 500 },
+         { message: "Could not send verification email. Please try again." },
+         { status: 502 },
       );
    }
+
+   return NextResponse.json({
+      message: "Check your email to verify your account.",
+   });
 }
